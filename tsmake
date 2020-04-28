@@ -1,0 +1,257 @@
+#!/usr/bin/env python3
+#
+# (c) 2020 Fetal-Neonatal Neuroimaging & Developmental Science Center
+#                   Boston Children's Hospital
+#
+#              http://childrenshospital.org/FNNDSC/
+#                        dev@babyMRI.org
+#
+
+import  sys, os
+import  json
+from    argparse                import RawTextHelpFormatter
+from    argparse                import ArgumentParser
+from    distutils.sysconfig     import get_python_lib
+
+import  pudb
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'build'))
+import  pfmisc
+from    pfmisc._colors          import Colors
+
+from    tsmake                  import tsmake
+
+# try:
+#     from        pfmisc          import  pfmisc
+# except:
+#     sys.path.insert(1, os.path.join(get_python_lib(True, True), 'site-packages'))
+#     sys.path.insert(1, os.path.join(get_python_lib(True, True), 'site-packages/pfmisc'))
+#     import      pfmisc
+
+
+# try:
+#     from        _colors         import Colors
+# except:
+#     from        pfmisc._colors  import Colors
+
+str_version = "0.99"
+str_desc = Colors.CYAN + """
+ _                           _
+| |                         | |         
+| |_  ___  _ __ ___    __ _ | | __  ___ 
+| __|/ __|| '_ ` _ \  / _` || |/ / / _ \ 
+| |_ \__ \| | | | | || (_| ||   < |  __/
+ \__||___/|_| |_| |_| \__,_||_|\_\ \___|
+                                        
+
+
+
+                             tslide page make
+
+
+                              -- version """ + \
+             Colors.YELLOW + str_version + Colors.CYAN + """ --
+
+    'tsmake' collects a set of text/json slide files into an `index.html`
+    suitable for running the tslide text-slide presentation system.
+
+    The `tslide` system is designed to provide a quick-n-dirty mechanism
+    for building an html slide show around a series of essentially text-
+    formatted and decorated individual files. The slide order is indentical 
+    to the ls-order of the underlying individual slide files.
+
+    Creating slides is as simple as saving a set of JSON text files of 
+    format:
+""" + Colors.NO_COLOUR + """
+
+    {""" + Colors.YELLOW + """
+        'slideTitle': """+ Colors.GREEN + """'Some title for this slide',
+        """ + Colors.YELLOW + """'slideBody': """ + Colors.GREEN + """'
+            <h3>On on this slide, we have...</h3>
+            <pre>
+
+    Some text for the slide body.
+
+            </pre>
+        '""" + Colors.NO_COLOUR + """
+    }
+
+"""
+
+def synopsis(ab_shortOnly = False):
+    scriptName = os.path.basename(sys.argv[0])
+    shortSynopsis =  '''
+    NAME
+
+	    %s
+
+        - build tslide text files into an `index.html`
+
+    SYNOPSIS
+
+            %s                                                    \\
+                --inputDir <inputDir>                               \\
+                [--slideListGlob <slidesListGlob>]                  \\
+                [--slidePrefixDOMID <slidePrefixDOMID>]             \\
+                [--fortune <numSlides>]                             \\
+                [--verbosity <level>]                               \\
+                [-x|--desc]                                         \\
+                [-y|--synopsis]
+            
+    BRIEF EXAMPLE
+
+            # Assume a dir './slideShow` exists and contains files of
+            # pattern 'slide-01.json', 'slide-02.json', ...
+            make                                                    \\
+                --inputDir slideShow                                \\
+                --slideListGlob "slide-*                
+
+    '''  % (scriptName, scriptName)
+
+    description =  '''
+    DESCRIPTION
+
+        ``%s`` is a module/script that assembles a set of text
+        json files into an `index.html` suitable for running/displaying
+        a slide show.
+                        
+    ARGS
+
+        --inputDir <inputDir>
+        An input directory containing individual text (json) slide files
+        to assemble into slide show.
+
+        [--slideListGlob <slideListGlob>]
+        Files in <inputDir> are processed, in ls-shell order, to construct
+        a slide show. If specified, this <slideListGlob> is applied
+        to filter the file ls in <inputDir>.
+
+        [--slidePrefixDOMID <slidePrefixDOMID>]
+        If specified, use <slidePrefixDOMID> as the DOM id in the generated
+        `index.html` for each slide.
+
+        [--fortune <numberOfSlides>]
+        If specified build "fake" <numberOfSlides> in <inputDir> first and then
+        process them.
+
+        [-x|--desc]                                     
+        Provide an overview help page.
+
+        [-y|--synopsis]
+        Provide a synopsis help summary.
+
+        [--version]
+        Print internal version number and exit.
+
+        [-v|--verbosity <level>]
+        Set the verbosity level. "0" typically means no/minimal output. Allows for
+        more fine tuned output control as opposed to '--quiet' that effectively
+        silences everything.
+
+    EXAMPLES
+
+        # Assume a dir './slideShow` exists and contains files of
+        # pattern 'slide-01.json', 'slide-02.json', ...
+
+        %s                                                    \\
+            --inputDir slideShow                                \\
+            --slideListGlob "slide-*                
+
+        # Create a series of "fake" slides first, and then 
+        # build a slow show.
+
+        %s                                                    \\
+            --inputDir slideShow                                \\
+            --fortune 10
+
+    ''' % (scriptName, scriptName, scriptName)
+
+    if ab_shortOnly:
+        return shortSynopsis
+    else:
+        return shortSynopsis + description
+
+
+
+parser  = ArgumentParser(description = str_desc, formatter_class = RawTextHelpFormatter)
+
+parser.add_argument(
+    '--inputDir',
+    help    = 'directory from which to read slide text files.',
+    dest    = 'inputdir',
+    default = "./"
+)
+
+parser.add_argument(
+    '--slideListGlob',
+    help    = 'glob pattern to apply to file list in <inputDir>.',
+    dest    = 'slideListGlob',
+    default = "*"
+)
+
+parser.add_argument(
+    '--slidePrefixDOMID',
+    help    = 'ID prefix string for each slide in the DOM.',
+    dest    = 'slidePrefixDOMID',
+    default = "slide-"
+)
+
+parser.add_argument(
+    '--fortune',
+    help    = 'if specified, build a "fortune" slideshow',
+    dest    = 'fortune',
+    default = ""
+)
+
+parser.add_argument(
+    '--version',
+    help    = 'if specified, print version number',
+    dest    = 'b_version',
+    action  = 'store_true',
+    default = False
+)
+
+parser.add_argument(
+    "-v", "--verbosity",
+    help    = "verbosity level for app",
+    dest    = 'verbosity',
+    default = "1"
+)
+
+parser.add_argument(
+    "-x", "--desc",
+    help    = "long synopsis",
+    dest    = 'desc',
+    action  = 'store_true',
+    default = False
+)
+
+parser.add_argument(
+    "-y", "--synopsis",
+    help    = "short synopsis",
+    dest    = 'synopsis',
+    action  = 'store_true',
+    default = False
+) 
+
+args            = parser.parse_args()
+
+if args.desc or args.synopsis:
+    print(str_desc)
+    if args.desc:
+        str_help     = synopsis(False)
+    if args.synopsis:
+        str_help     = synopsis(True)
+    print(str_help)
+    sys.exit(1)
+
+if args.b_version:
+    print("Version: %s" % str_version)
+    sys.exit(1)
+
+pudb.set_trace()
+
+TSmake  = tsmake(vars(args))
+
+json.dumps(
+    TSmake.run()
+)

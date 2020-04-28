@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<!-- <html xmlns="http://www.w3.org/1999/xhtml"> -->
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title id="headTitle">Welcome to tslide</title>
+
+    <!-- 3rd Party css -->
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.13.0/css/all.css">    
+    <link rel="stylesheet" href="termynal.css">
+
+    <!-- 3rd Party js -->
+    <!-- Do we really need jquery? -->
+    <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+    <!-- This page css -->
+    <link rel="stylesheet" href="css/tslide.css" type="text/css" />
+</head>
+
+<body>
+
+    <div class="metaData" id="numberOfSlides" style="display: none;">4</div>
+    <div class="metaData" id="slideIDprefix"  style="display: none;">slide-</div>
+
+    <div class="boxtext pure-control-group" style="margin-bottom: -3px;">
+        <!-- Top "navigation" bar -->
+        <div id="slideProgress">
+            <div id="slideBar"></div>
+        </div>
+
+
+        <input  type    =  "button" 
+                onclick =  "page.advance_toFirst()" 
+                value   =  "&#xf077" 
+                style   =  "float: left;"
+                id      =  "first" 
+                name    =  "first" 
+                class   =  "pure-button 
+                            pure-button-primary 
+                            fas fa-chevron-up">
+        </input>
+        <input  type    =  "button" 
+                onclick =  "page.advance_toPrevious()" 
+                style   =  "float: left;"
+                value   =  "&#xf053" 
+                id      =  "previous" 
+                name    =  "previous" 
+                class   =  "pure-button 
+                            pure-button-primary 
+                            fas fas-chevron-left">
+        </input>
+
+        <input  type    =  "button" 
+                onclick =  "page.advance_toLast()" 
+                value   =  "&#xf078" 
+                style   =  "float: right;"
+                id      =  "last" 
+                name    =  "last" 
+                class   =  "pure-button 
+                            pure-button-primary 
+                            fas fa-chevron-down">
+        </input>
+        <input  type    =  "button" 
+                onclick =  "page.advance_toNext()" 
+                value   =  "&#xf054" 
+                style   =  "float: right;"
+                id      =  "next" 
+                name    =  "next" 
+                class   =  "pure-button 
+                            pure-button-primary 
+                            fas fas-chevron-right">
+        </input>
+        <br>
+    </div>
+
+    <div>
+        <img src="logos/chris-logo.png"  style="float: left; padding-left: 100px;" >
+        <figure style="float: right; padding-right: 100px;" >
+            <img src="logos/fnndsc-logo.svg" width=180px; >
+            <figcaption>FNNDSC</figcaption>
+        </figure>
+        <h2     class   = "formLayout" 
+                name    = "pageTitle" 
+                id      = "pageTitle" 
+                style   = "font-family: Sans;">
+        Slide
+        </h2>
+    </div>
+        
+    <div class="formLayout">
+    
+        <div id="slide-1-title" style="display: none;">
+            Data flow
+        </div>
+        <div class="container" id="slide-1" name="slide-1" style="display: block;">
+            <pre>
+  
+                             ┌──────────┐ 
+                             │          │ 
+  ┌─────────────┐            │          │  
+  │ FS (data)   ├───────────>│   OD     │
+  └─────────────┘            │          │
+                             │          │
+                             └──────────┘
+              
+
+
+
+
+
+                             
+            </pre>
+        </div>
+
+        <div id="slide-2-title" style="display: none;">
+            pfcon communication
+        </div>
+        <div class="container" id="slide-2" name="slide-2" style="display: none;">
+            <pre>
+                        
+                        ┌────────┐ 
+                        │        │  
+                        │ pfcon  │
+                        │        │
+                        └──┬───┬─┘
+                           │   │
+         ┌─────────────────┘   │                                      
+         │                     │           
+         │                     │           
+         V                     V                  
+     ┌──────┐              ┌───────┐
+     │ pman │              │ pfioh │
+     └──────┘              └───────┘
+     
+            </pre>
+        </div>
+
+
+        <div id="slide-3-title" style="display: none;">
+            pfcon communication
+        </div>
+        <div class="container" id="slide-3" name="slide-3" style="display: none;">
+            <pre>
+                        
+                        ┌────────┐ 
+  ┌────────┐            │        │  
+  │ client │<──────────>│ pfcon  │
+  └────────┘            │        │
+                        └──┬───┬─┘
+                           │   │
+         ┌─────────────────┘   │                                      
+         │                     │           
+         │                     │           
+         V                     V                  
+     ┌──────┐              ┌───────┐
+     │ pman │              │ pfioh │
+     └──────┘              └───────┘  
+            </pre>
+        </div>
+
+        <div id="slide-4-title" style="display: none;">
+            pfcon communication with pfurl
+        </div>
+        <div class="container" id="slide-4" name="slide-4" style="display: none;">
+            <pre>
+                        
+                        ┌────────┐ 
+  ┌────────┐   (pfurl)  │        │  
+  │ client │<──────────>│ pfcon  │
+  └────────┘            │        │
+                        └──┬───┬─┘
+              (pfurl)      │   │
+         ┌─────────────────┘   │                                      
+         │                     │           
+         │             (pfurl) │           
+         V                     V                  
+     ┌──────┐              ┌───────┐
+     │ pman │              │ pfioh │
+     └──────┘              └───────┘  
+            </pre>
+        </div>
+
+
+        <div class="modal"><!-- Place at bottom of page --></div>
+    </div>
+
+    <div>
+        <br>
+        <div class = "formLayout pure-control-group" 
+             style = "margin-bottom: -3px; 
+                      padding: 1px;">
+            <span class = "footer" style="float: left;">
+                Fetal Neonatal Neuroimaging Development Science Center
+            </span>
+            <span id = "slideCounter" class = "footer" style="float: right;">
+                slide 
+            </span>
+        </div>
+    </div>   
+    
+    <script src="termynal.js" data-termynal-container="#termynal_pfdcm|#termynal_pacsQuery|#termynal_pacsRetriveStatus"></script>
+    <script src="js/tslide.js"></script>
+
+</body>
+</html>

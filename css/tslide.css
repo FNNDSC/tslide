@@ -1,0 +1,265 @@
+#slideProgress {
+    width: 100%;
+    background-color: grey;
+  }
+  
+#slideBar {
+    width: 1%;
+    height: 5px;
+    background-color: rgb(9, 250, 9);
+  }
+
+
+.blinking{
+    animation:blinkingText 1.2s infinite;
+}
+@keyframes blinkingText{
+    0%{     color:  #000;         }
+    49%{    color: #000;          }
+    60%{    color: transparent;     }
+    99%{    color: transparent;     }
+    100%{   color: #000;          }
+}
+
+.container {
+    text-align: center;
+  }
+ 
+ .container pre {
+   display: inline-block;
+   text-align: left;
+}
+
+dialog {
+    padding: 0;
+    border: 0;
+    border-radius: 0.6rem;
+    box-shadow: 0 0 1em black;
+}
+  
+dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+dialog + .backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+dialog[open] {
+    animation: slide-up 0.4s ease-out;
+}
+
+.close {
+    position: absolute;
+    top: 0.2em;
+    right: 0.2em;
+    padding: 0.3em;
+    line-height: 0.6;
+    background-color: transparent;
+    border: 0;
+    font-size: 2em;
+}
+
+.modal-header,
+.modal-body,
+.modal-footer {
+    padding: 1em;
+}
+  
+.modal-header {
+    margin: 0;
+    padding-bottom: 0.6em;
+    background-color: hsl(211, 90%, 90%);
+    border-top-left-radius: 0.6rem;
+    border-top-right-radius: 0.6rem;
+    border-bottom: 1px solid hsl(211, 51%, 65%);
+}
+  
+.modal-footer {
+    border-top: 1px solid hsl(211, 51%, 65%);
+}
+
+td, th {
+    border: 1px solid #999;
+    padding: 0.5rem;
+    text-align: center;
+}
+    
+.fa-icon-innter-text {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0;
+    text-align: left;
+}
+
+.boxtext {
+    border:                0px;
+    /* border-color:        white; */
+    background-color:    #282D33;
+    color:               white;
+    margin-top:            auto;
+    /* font-family:           "Fira Mono", 'Consolas'; */
+    position:              relative;
+    margin-bottom:         -3px;
+    margin-left:           84px;
+    margin-right:          84px;
+    /* padding-left:          20px; */
+    border-radius:         5px;
+}
+
+button{
+    float:left;
+}
+
+h2:hover .overlay {
+    display:block;
+    background-color:white;
+    opacity:0.75;
+}
+
+.formLayout {
+    /* background-color: #f3f3f3; */
+    background-color: #404346;
+    border: solid 1px #a1a1a1;
+    padding: 10px;
+    width: 1240px;
+    margin-left: auto;
+    margin-right:auto;
+    color: white;
+}
+
+
+prebox {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+.string     { font-family:courier; color: lightgreen; }
+.number     { font-family:courier; color: orange; }
+.boolean    { font-family:courier; color: lightblue; }
+.null       { font-family:courier; color: magenta; }
+.key        { font-family:courier; color: cyan; }
+
+.input {
+    font-family: courier;
+}
+
+.input-dark {
+    background-color:#555;
+    color: #fff;
+}
+
+.formLayout label {
+    text-align: right;
+    padding-right: 20px;
+}
+
+br {
+    clear: left;
+}
+
+.modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 )
+    url('http://i.stack.imgur.com/FhHRx.gif')
+    50% 50%
+    no-repeat;
+}
+
+/* When the body has the loading class, we turn
+the scrollbar off with overflow:hidden */
+body.loading {
+    overflow: hidden;
+}
+
+/* Anytime the body has the loading class, our
+modal element will be visible */
+body.loading .modal {
+    display: block;
+}
+
+    
+.button-xsmall {
+    font-size: 70%;
+}
+
+.button-xxsmall {
+    font-size: 10%;
+    padding: .1em .1em;
+}
+
+.button-red {
+    background: rgb(202, 25, 25); /* this is a red */
+}
+
+.button-patternflyblue {
+    background: rgb(0, 100, 200); /* this is a patternfly blue */
+
+}
+
+.button-green {
+    background: rgb(28, 184, 65); /* this is a green */
+}
+
+.button-orange {
+    background: rgb(223, 117, 20); /* this is an orange */
+}
+
+html {
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+.cf:before, .cf:after {
+    display: table;
+    content: ' ';
+}
+.cf:after {
+    clear: both;
+}
+.cf {
+    *zoom: 1;
+}
+
+body {
+    font-family:    'Monospaced';
+    margin:         0;
+    color:          #555;
+    background-color: #55575a;
+}
+
+.footer {
+    font-family:    'Sans';
+    font-size:      70%;
+    color: white;
+    padding: 1px;
+    margin: 1px;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+figure {
+    margin: 0;
+    padding: 10px;
+}
+
+figure a {
+    display: block;
+}
+
+mark {
+    padding: 0 5px;
+    background-color: #ddd;
+}
+::backdrop {
+    background-color: rgba(0,0,0,0.5);
+}

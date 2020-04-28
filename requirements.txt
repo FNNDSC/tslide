@@ -1,0 +1,5 @@
+fortune
+cowsay
+pyfiglet
+pfstate
+python-swiftclient
