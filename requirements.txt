@@ -3,3 +3,4 @@ cowsay
 pyfiglet
 pfstate
 python-swiftclient
+hjson
