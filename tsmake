@@ -33,8 +33,9 @@ from    tsmake                  import tsmake
 # except:
 #     from        pfmisc._colors  import Colors
 
+str_name    = tsmake
 str_version = "0.99"
-str_desc = Colors.CYAN + """
+str_desc    = Colors.CYAN + """
  _                           _
 | |                         | |         
 | |_  ___  _ __ ___    __ _ | | __  ___ 
@@ -90,6 +91,8 @@ def synopsis(ab_shortOnly = False):
 
             %s                                                    \\
                 --inputDir <inputDir>                               \\
+                --outputDir <outputDir>                             \\
+                [--slideTextNumRows <numRows>]                      \\
                 [--slideListGlob <slidesListGlob>]                  \\
                 [--slidePrefixDOMID <slidePrefixDOMID>]             \\
                 [--fortune <numSlides>]                             \\
@@ -103,6 +106,7 @@ def synopsis(ab_shortOnly = False):
             # pattern 'slide-01.json', 'slide-02.json', ...
             make                                                    \\
                 --inputDir slideShow                                \\
+                --outputDir /tmp/slideShow                          \\
                 --slideListGlob "slide-*                
 
     '''  % (scriptName, scriptName)
@@ -113,12 +117,31 @@ def synopsis(ab_shortOnly = False):
         ``%s`` is a module/script that assembles a set of text
         json files into an `index.html` suitable for running/displaying
         a slide show.
+
+        Resultant `index.html` and related css, js, and image files/dirs
+        are all deposited in an <outputDir>. Running a simple web server
+        rooted in that directory is typcially no more difficult that 
+
+            cd <outputDir>
+            python3 -m http.server
+        
+        In this manner, by having <outputDir> be outside of the source
+        code repo directory, any changes to css/js etc in the resultant 
+        <outputDir> do not contaminate the base repository.
                         
     ARGS
 
         --inputDir <inputDir>
         An input directory containing individual text (json) slide files
         to assemble into slide show.
+
+        --outputDir <outputDir>
+        An output directory that will contain the resultant web-based 
+        files suitable for completely running the created slide show.
+
+        [--slideTextNumRows <numRows>]
+        If nonzero, pad any text slide with extra "rows" (i.e. \\n) so that
+        slides all have a consistent minimum number of rows.
 
         [--slideListGlob <slideListGlob>]
         Files in <inputDir> are processed, in ls-shell order, to construct
@@ -154,6 +177,7 @@ def synopsis(ab_shortOnly = False):
 
         %s                                                    \\
             --inputDir slideShow                                \\
+            --outputDir /tmp/slideShow                          \\
             --slideListGlob "slide-*                
 
         # Create a series of "fake" slides first, and then 
@@ -161,6 +185,7 @@ def synopsis(ab_shortOnly = False):
 
         %s                                                    \\
             --inputDir slideShow                                \\
+            --outputDir /tmp/SlideShow
             --fortune 10
 
     ''' % (scriptName, scriptName, scriptName)
@@ -177,8 +202,22 @@ parser  = ArgumentParser(description = str_desc, formatter_class = RawTextHelpFo
 parser.add_argument(
     '--inputDir',
     help    = 'directory from which to read slide text files.',
-    dest    = 'inputdir',
-    default = "./"
+    dest    = 'inputDir',
+    default = ""
+)
+
+parser.add_argument(
+    '--outputDir',
+    help    = 'directory in which to build web slide show.',
+    dest    = 'outputDir',
+    default = ""
+)
+
+parser.add_argument(
+    '--slideTextNumRows',
+    help    = 'minimum number of rows in a text slide.',
+    dest    = 'slideTextNumRows',
+    default = "0"
 )
 
 parser.add_argument(
@@ -197,9 +236,9 @@ parser.add_argument(
 
 parser.add_argument(
     '--fortune',
-    help    = 'if specified, build a "fortune" slideshow',
+    help    = 'if specified, build a "fortune" slideshow of passed numberOfSlides',
     dest    = 'fortune',
-    default = ""
+    default = "0"
 )
 
 parser.add_argument(
@@ -233,7 +272,7 @@ parser.add_argument(
     default = False
 ) 
 
-args            = parser.parse_args()
+args                = parser.parse_args()
 
 if args.desc or args.synopsis:
     print(str_desc)
@@ -244,14 +283,17 @@ if args.desc or args.synopsis:
     print(str_help)
     sys.exit(1)
 
+d_args              = vars(args).copy()
+d_args['desc']      = str_desc
+d_args['name']      = str_name
+d_args['version']   = str_version
+
 if args.b_version:
     print("Version: %s" % str_version)
     sys.exit(1)
 
-pudb.set_trace()
-
-TSmake  = tsmake(vars(args))
+TSmake  = tsmake(**d_args)
 
 json.dumps(
-    TSmake.run()
+    TSmake.run(timerStart = True)
 )

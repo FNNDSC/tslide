@@ -7,6 +7,11 @@ import      pprint
 import      re
 import      logging
 
+import      hjson
+import      glob
+
+from        distutils.dir_util  import  copy_tree
+
 # Imports for the "fortune" auto-generating
 import      fortune
 import      cowsay
@@ -21,15 +26,19 @@ from        pfmisc              import  error
 
 import      pudb
 from        pfstate             import  S
+from        pfmisc.C_snode      import  C_snode
 
 class D(S):
     """
-    A derived 'pfstate' class that keeps system state.
+        A derived 'pfstate' class that keeps some system state
+        variables in a tree SNode structure.
     """
 
     def __init__(self, *args, **kwargs):
         """
-        Constructor
+            Constructor for the state object.
+
+            This might be overkill for this module.
         """
 
         for k,v in kwargs.items():
@@ -39,28 +48,57 @@ class D(S):
         if not S.b_init:
             d_specific  = \
                 {
-                    'cowsaycharacters': [
-                        'beavis',
-                        'cheese',
-                        'daemon',
-                        'cow',
-                        'dragon',
-                        'ghostbusters',
-                        'kitty',
-                        'meow',
-                        'milk',
-                        'stegasaurus',
-                        'stimpy',
-                        'turkey',
-                        'turtle',
-                        'tux'
-                    ],
-                    'htmlComponents': {
-                        'head':     {},
-                        'navbar':   {},
-                        'logos':    {},
-                        'body':     {},
-                        'footer':   {}
+                    "slideMeta": {
+                        'cowsaycharacters': [
+                            'beavis',
+                            'cheese',
+                            'daemon',
+                            'cow',
+                            'dragon',
+                            'ghostbusters',
+                            'kitty',
+                            'meow',
+                            'milk',
+                            'stegasaurus',
+                            'stimpy',
+                            'turkey',
+                            'turtle',
+                            'tux'
+                        ],
+                        'htmlComponents': {
+                            'doctype':  {
+                                'file':     'doctype.html',
+                                'contents': ''
+                            },
+                            'head':     {
+                                'file':     'head.html',
+                                'contents': ''
+                            },
+                            'navbar':   {
+                                'file':     'navbar.html',
+                                'contents': ''
+                            },
+                            'logos':   {
+                                'file':     'logos.html',
+                                'contents': ''
+                            },
+                            'body':     {
+                                'file':     'body.html',
+                                'contents': ''
+                            },
+                            'footer':   {
+                                'file':     'footer.html',
+                                'contents': ''
+                            },
+                        },
+                        'dirComponents': {
+                            'html':         './html',
+                            'logos':        './logos',
+                            'images':       './images',
+                            'css':          './css',
+                            'javascript':   './js',
+                            'fortunes':     './fortunes'
+                        }
                     }
                 }
             S.d_state.update(d_specific)
@@ -90,52 +128,18 @@ class tsmake(object):
         'outputDirFail'   : {
             'action'        : 'trying to check on the output directory, ',
             'error'         : 'directory not specified. This is a *required* input',
-            'exitCode'      : 1}
-        }
+            'exitCode'      : 1
+        },
+        'inputDirFail'   : {
+            'action'        : 'trying to check on the input directory, ',
+            'error'         : 'directory not found. This is a *required* input',
+            'exitCode'      : 1
+        },
+    }
 
-
-    def declare_selfvars(self):
+    def declare_selfvars(self, *args, **kwargs):
         """
         A block to declare self variables
-        """
-
-        #
-        # Object desc block
-        #
-        self.str_desc                   = ''
-        self.__name__                   = "tsmake"
-        self.str_version                = '0.99'
-
-        # Directory and filenames
-        self.str_inputDir               = ''
-        self.str_inputFile              = ''
-        self.str_extension              = ''
-        self.str_outputFileStem         = ''
-        self.str_ouptutDir              = ''
-
-        # state
-        self.s                          = D(*args, **kwargs)
-
-        # pftree dictionary
-        self.pf_tree                    = None
-        self.numThreads                 = 1
-
-        self.str_stdout                 = ''
-        self.str_stderr                 = ''
-        self.exitCode                   = 0
-
-        self.b_json                     = False
-
-        # Convenience vars
-        self.dp                         = None
-        self.log                        = None
-        self.tic_start                  = 0.0
-        self.pp                         = pprint.PrettyPrinter(indent=4)
-        self.verbosityLevel             = 1
-
-    def __init__(self, *args, **kwargs):
-        """
-        Constructor for the tsmake module.
         """
 
         def outputDir_process(str_outputDir):
@@ -144,180 +148,361 @@ class tsmake(object):
             else:
                 self.str_outputDir  = str_outputDir
 
-        # pudb.set_trace()
-        self.declare_selfvars(self)
+        #
+        # Object desc block
+        #
+        self.args                       = kwargs
+        self.__name__                   = "tsmake"
 
+        # Parse CLI args
         for key, value in kwargs.items():
             if key == 'inputDir':           self.str_inputDir           = value
-            if key == 'maxDepth':           self.maxDepth               = int(value)
-            if key == 'inputFile':          self.str_inputFile          = value
             if key == "outputDir":          outputDir_process(value) 
-            if key == 'outputFileStem':     self.str_outputFileStem     = value
-            if key == 'outputLeafDir':      self.str_outputLeafDir      = value
-            if key == 'extension':          self.str_extension          = value
-            if key == 'threads':            self.numThreads             = int(value)
-            if key == 'extension':          self.str_extension          = value
             if key == 'verbosity':          self.verbosityLevel         = int(value)
             if key == 'json':               self.b_json                 = bool(value)
             if key == 'followLinks':        self.b_followLinks          = bool(value)
+            if key == 'fortune':            self.fortuneSlides          = int(value)
+            if key == 'slidePrefixDOMID':   self.str_slidePrefixDOMID   = value
+            if key == 'slideListGlob':      self.str_slideListGlob      = value
+            if key == 'slideTextNumRows':   self.textNumRows            = int(value)
 
-        # Declare pf_tree
-        self.pf_tree    = pftree.pftree(
-                            inputDir                = self.str_inputDir,
-                            maxDepth                = self.maxDepth,
-                            inputFile               = self.str_inputFile,
-                            outputDir               = self.str_outputDir,
-                            outputLeafDir           = self.str_outputLeafDir,
-                            threads                 = self.numThreads,
-                            verbosity               = self.verbosityLevel,
-                            followLinks             = self.b_followLinks,
-                            relativeDir             = True
-        )
+        # Slide lists and dictionaries
+        self.lstr_slideFiles            = []
+        self.ld_slide                   = []
+        self.str_extension              = "hjson"
 
-        # Set logging
-        self.dp                        = pfmisc.debug(    
+        #----------------- state --------------------
+        # There are some implicit assumptions in the 
+        # underlying pfstate module that need to be
+        # addressed in future versions of that module
+        self.args['args']                       = {}
+        self.args['args']['str_configFileLoad'] = ''
+        self.args['args']['str_configFileSave'] = ''
+        self.args['args']['str_debugToDir']     = '/tmp'
+        self.args['args']['verbosity']          = self.args['verbosity']
+        self.state                              = D(**self.args)
+        self.data                               = self.state.T
+
+        # pftree dictionary
+        self.pf_tree                    = None
+        self.numThreads                 = 1
+
+        # Some output handling
+        self.str_stdout                 = ''
+        self.str_stderr                 = ''
+        self.exitCode                   = 0
+
+        # Convenience vars
+        self.b_json                     = False
+        self.dp                         = pfmisc.debug(    
                                             verbosity   = self.verbosityLevel,
                                             within      = self.__name__
                                             )
-        self.log                       = pfmisc.Message()
+        self.log                        = pfmisc.Message()
         self.log.syslog(True)
+        self.tic_start                  = 0.0
+        self.pp                         = pprint.PrettyPrinter(indent=4)
+
+    def __init__(self, *args, **kwargs):
+        """
+        DESC
+            Constructor for the tsmake module -- mostly
+            a thin fall through to the declare_selfvars()
+            method -- the relative sparsity of this method
+            is due to the object design patter that would
+            have "variable assignment" code handled by
+            self.declare_selfvars() and any calls to specific
+            setup methods handled here.
+        """
+
+        # pudb.set_trace()
+        self.declare_selfvars(*args, **kwargs)
 
     def env_check(self, *args, **kwargs):
         """
-        This method provides a common entry for any checks on the 
-        environment (input / output dirs, etc)
+        DESC
+            This method provides a common entry for any checks on the 
+            environment (input / output dirs, etc). Essentially, this
+            method checks the at the <self.str_outputDir> was specified 
+            and that the <self.str_inputDir> exists.
+
+        IMPLICIT INPUT
+            self.str_outputDir
+            self.str_inputDir
+
+        RETURN
+            {
+                'status':       True|False
+                'str_error':    Optional error message
+            }
         """
         b_status    = True
         str_error   = ''
         if not len(self.str_outputDir): 
-            b_status = False
+            b_status    = False
             str_error   = 'output directory not specified.'
             self.dp.qprint(str_error, comms = 'error')
-            error.warn(self, 'outputDirFail', drawBox = True)
+            error.fatal(self, 'outputDirFail', drawBox = True)
+        if not os.path.isdir(self.str_inputDir):
+            b_status    = False
+            str_error   = 'input dirspec does seem to be a valid directory.'
+            self.dp.qprint(str_error, comms = 'error')
+            error.fatal(self, 'inputDirFail', drawBox = True)
         return {
             'status':       b_status,
             'str_error':    str_error
         }
 
-
-    def slide_fileRead(self, *args, **kwargs):
+    def htmlSnippets_read(self, *args, **kwargs):
         """
-        Read a DICOM file and perform some initial
-        parsing of tags.
+        DESC
+            Read html file snippets to use to assemble into
+            final `index.html`.
 
-        NB!
-        For thread safety, class member variables
-        should not be assigned since other threads
-        might override/change these variables in mid-
-        flight!
+            The "map" to files is stored in the self.s state 
+            structure.            
+
+        INPUT
+            directory  = <str_directory>
+
+        RETURN
+            {
+                'status':       True|False,
+            }
+
         """
+        d_ret = {
+            'status':       False
+        }
+        str_dataPath        = '/slideMeta/htmlComponents'
+        l_htmlComponents    = list(self.data.lstr_lsnode(str_dataPath))
+        str_htmlDir         = self.data.cat('slideMeta/dirComponents/html')
+        for el in l_htmlComponents:
+            str_fileDP      = '%s/%s/file'      % (str_dataPath, el)
+            str_contentsDP  = '%s/%s/contents'  % (str_dataPath, el)
+            str_fileName    = self.data.cat(str_fileDP)
+            str_file        = '%s/%s' % (str_htmlDir, str_fileName)
+            with open(str_file, 'r') as fb:
+                str_contents = fb.read()
+                self.data.touch(str_contentsDP, str_contents)
 
-        def dcmToStr_doExplicit(d_dcm):
-            """
-            Perform an explicit element by element conversion on dictionary
-            of dcm FileDataset
-            """
-            b_status = True
-            self.dp.qprint('In directory: %s' % os.getcwd(),     comms = 'error')
-            self.dp.qprint('Failed to str convert %s' % str_file,comms = 'error')
-            self.dp.qprint('Possible source corruption or non standard tag',
-                            comms = 'error')
-            self.dp.qprint('Attempting explicit string conversion...',
-                            comms = 'error')
-            l_k         = list(d_dcm.keys())
-            str_raw     = ''
-            str_err     = ''
-            for k in l_k:
-                try:
-                    str_raw += str(d_dcm[k])
-                    str_raw += '\n'
-                except:
-                    str_err = 'Failed to string convert key "%s"' % k
-                    str_raw += str_err + "\n"
-                    self.dp.qprint(str_err, comms = 'error')
-                    b_status = False
-            return str_raw, b_status
+        return d_ret
+
+    def slide_filesRead(self, *args, **kwargs):
+        """
+        DESC
+            Read a series of globbed text slide files into
+            relevant internal data structures.
+
+        INPUT
+            directory  = <str_directory>
+
+        RETURN
+            {
+                'status':       True|False,
+                'numSlides':    <int>num
+            }
+
+        """
 
         b_status        = False
-        l_tags          = []
-        l_tagsToUse     = []
-        d_tagsInString  = {}
-        str_file        = ""
-        str_outputFile  = ""
+        str_directory   = './'
 
-        d_DICOM           = {
-            'dcm':              None,
-            'd_dcm':            {},
-            'strRaw':           '',
-            'l_tagRaw':         [],
-            'd_json':           {},
-            'd_dicom':          {},
-            'd_dicomSimple':    {}
-        }
 
         for k, v in kwargs.items():
-            if k == 'file':             str_file    = v
-            if k == 'l_tagsToUse':      l_tags      = v
+            if k == 'directory':        str_directory   = v
 
-        if len(args):
-            l_file          = args[0]
-            str_file        = l_file[0]
-
-        str_localFile   = os.path.basename(str_file)
-        str_path        = os.path.dirname(str_file)
-        # self.dp.qprint("%s: In input base directory:      %s" % (threading.currentThread().getName(), self.str_inputDir))
-        # self.dp.qprint("%s: Reading DICOM file in path:   %s" % (threading.currentThread().getName(),str_path))
-        # self.dp.qprint("%s: Analysing tags on DICOM file: %s" % (threading.currentThread().getName(),str_localFile))      
-        # self.dp.qprint("%s: Loading:                      %s" % (threading.currentThread().getName(),str_file))
-
-        try:
-            d_DICOM['dcm']  = dicom.read_file(str_file)
-            b_status        = True
-        except:
-            self.dp.qprint('In directory: %s' % os.getcwd(),    comms = 'error')
-            self.dp.qprint('Failed to read %s' % str_file,      comms = 'error')
-            b_status        = False
-        if b_status:
-            d_DICOM['l_tagRaw'] = d_DICOM['dcm'].dir()
-            d_DICOM['d_dcm']    = dict(d_DICOM['dcm'])
-            try:
-                d_DICOM['strRaw']   = str(d_DICOM['dcm'])
-            except:
-                d_DICOM['strRaw'], b_status = dcmToStr_doExplicit(d_DICOM['d_dcm'])
-
-            if len(l_tags):
-                l_tagsToUse     = l_tags
-            else:
-                l_tagsToUse     = d_DICOM['l_tagRaw']
-
-            if 'PixelData' in l_tagsToUse:
-                l_tagsToUse.remove('PixelData')
-
-            for key in l_tagsToUse:
-                d_DICOM['d_dicom'][key]       = d_DICOM['dcm'].data_element(key)
-                try:
-                    d_DICOM['d_dicomSimple'][key] = getattr(d_DICOM['dcm'], key)
-                except:
-                    d_DICOM['d_dicomSimple'][key] = "no attribute"
-                d_DICOM['d_json'][key]        = str(d_DICOM['d_dicomSimple'][key])
-
-            # pudb.set_trace()
-            d_tagsInString  = self.tagsInString_process(d_DICOM, self.str_outputFileStem)
-            str_outputFile  = d_tagsInString['str_result']
+        self.lstr_slideFiles    = sorted(
+                                    glob.glob(str_directory + 
+                                    '/' + self.str_slideListGlob)
+                                )
+        if len(self.lstr_slideFiles):
+            for str_file in self.lstr_slideFiles:
+                with open(str_file) as fp:
+                    self.ld_slide.append(hjson.load(fp))
 
         return {
             'status':           b_status,
-            'inputPath':        str_path,
-            'inputFilename':    str_localFile,
-            'outputFileStem':   str_outputFile,
-            'd_DICOM':          d_DICOM,
-            'l_tagsToUse':      l_tagsToUse
+            'numSlides':        len(self.lstr_slideFiles)
         }
+        
+    def htmlPage_assemble(self):
+        """
+        DESC
+            The main method for building the index.html page
+            by combining the snippets and incorporating the
+            hjson slides.
 
+        INPUT
+
+        RETURN
+            d_ret   = {
+                'status':       True|False
+                'pageHTML':     HTMLstring
+            }
+        """
+        b_status        = False
+        str_dataPath    = '/slideMeta/htmlComponents'
+        str_pageHTML    = ""
+
+        def numberOfSlides_find():
+            """
+            DESC
+                Simply return the number of slides.
+
+            INPUT
+                self
+
+            OUTPUT
+                Integer count of the number of slides.
+            """
+            return len(self.ld_slide)
+
+        def head_assemble(astr_page):
+            """
+            DESC
+                Create the doctype and head component, appending to
+                the input <astr_page>
+
+            INPUT
+                astr_page       current html code of page
+
+            RETURN
+                astr_page       updated html code of page
+            """
+            astr_page   ='''%s%s<html>\n%s
+            ''' % ( astr_page, 
+                    self.data.cat('%s/%s/contents' % (str_dataPath, 'doctype')),
+                    self.data.cat('%s/%s/contents' % (str_dataPath, 'head')))
+            return astr_page
+
+        def body_navAndLogosAssemble(astr_page):
+            """
+            DESC
+                Create the "initial" part of the body string.
+
+            INPUT
+                astr_page       current html code of page
+
+            RETURN
+                astr_page       updated html code of page
+            """
+            astr_page += '''\n<body>
+
+    <div class="metaData" id="numberOfSlides">%s</div>
+    <div class="metaData" id="slideIDprefix">%s</div>
+
+            ''' % (
+                numberOfSlides_find(),
+                self.str_slidePrefixDOMID
+            )
+
+            astr_page += self.data.cat('%s/navbar/contents' % str_dataPath)
+            astr_page += "\n"
+            astr_page += self.data.cat('%s/logos/contents'  % str_dataPath)
+            astr_page += "\n"
+            return astr_page
+
+        def slideText_process(astr_slideText):
+            """
+            DESC
+                Perform some optional processing on slide text.
+
+                This essentially means removing the ''' chars and
+                optionally padding to fixed number of rows.
+
+            INPUT
+                astr_slideText      text of slide
+
+            RETURN
+                astr_slideText      updated text
+            """
+            astr_slideText  = astr_slideText.replace("'''", '')            
+            rows            = astr_slideText.count('\n')
+            if rows < self.textNumRows:
+                rowsToAdd       = self.textNumRows - rows
+                str_rowsToAdd   = '\n' * rowsToAdd + '</pre>'
+                str_replaceFrom = '</pre>'
+                maxreplace      = 1
+                astr_slideText  = str_rowsToAdd.join(astr_slideText.rsplit(str_replaceFrom, maxreplace))
+            return astr_slideText
+
+        def body_slidesAssemble(astr_page):
+            """
+            DESC
+                Embed the slides into the body.
+
+            INPUT
+                astr_page       current html code of page
+
+            RETURN
+                astr_page       updated html code of page
+            """
+            astr_page += '''\n    <div class="formLayout">'''
+
+            slideCount = 1
+            for slide in self.ld_slide:
+                str_DOMID  = "%s%d" % (self.str_slidePrefixDOMID, slideCount)
+                astr_page += '''\n
+        <div id="%s-title" style="display: none;">
+            %s
+        </div>\n''' % ( str_DOMID, 
+                        slide['title'])
+                str_slideText   = slideText_process(slide['body'])
+                astr_page += '''
+        <div class="container" id="%s" name="%s" style="display: none;">
+%s
+        </div>''' % (str_DOMID, str_DOMID, str_slideText)
+                slideCount += 1
+            astr_page += '\n        <div class="modal"><!-- Place at bottom of page --></div>\n'
+            astr_page += "    </div>"
+            return astr_page
+
+        def footer_assemble(astr_page):
+            """
+            DESC
+                Assemble the footer.
+
+            INPUT
+                astr_page       current html code of page
+
+            RETURN
+                astr_page       updated html code of page
+            """
+            astr_page += "\n"
+            astr_page += self.data.cat('%s/footer/contents'  % str_dataPath)
+            astr_page += '''
+    <script src="termynal.js" data-termynal-container="#termynal_pfdcm|#termynal_pacsQuery|#termynal_pacsRetriveStatus"></script>
+    <script src="js/tslide.js"></script>
+</body>
+</html>'''
+            return astr_page
+
+        str_pageHTML    = footer_assemble(
+                            body_slidesAssemble(
+                                body_navAndLogosAssemble(
+                                    head_assemble(str_pageHTML)
+                                )
+                            )
+                        )
+        return {
+            'status':       b_status,
+            'pageHTML':     str_pageHTML
+        }
+                
     def filelist_prune(self, at_data, *args, **kwargs):
         """
-        Given a list of files, possibly prune list by 
-        extension.
+        DESC
+            Given a list of files, possibly prune list by 
+            extension.
+
+        NOTE:
+            This is a historical method and not currently 
+            used! It is conserved for now in case a `pfree`
+            directory walk is used in future.
+
+            The somewhat cumbersome calling signature is 
+            due to `pfree` callback requirements.
         """
 
         b_status    = True
@@ -343,7 +528,9 @@ class tsmake(object):
 
     def ret_dump(self, d_ret, **kwargs):
         """
-        JSON print results to console (or caller)
+        DESC
+            JSON print results to console (or caller) pending
+            state of passed kwargs.
         """
         b_print     = True
         for k, v in kwargs.items():
@@ -359,18 +546,25 @@ class tsmake(object):
 
     def run(self, *args, **kwargs):
         """
-        The run method is the main entry point to the operational 
-        behaviour of the script.
+        DESC
+            The run method is the main entry point to the operational 
+            behaviour of the script.
+
+        INPUT
+            [timerStart      = True|False]
+
+        RETURN
+        {
+            'status':       True|False
+        }
         """
 
         b_status            = True
-        d_pftreeRun         = {}
-        d_inputAnalysis     = {}
         d_env               = self.env_check()
         b_timerStart        = False
 
         self.dp.qprint(
-                "\tStarting pfdicom run... (please be patient while running)", 
+                "\tStarting tsmake run... (please be patient while running)", 
                 level = 1
                 )
 
@@ -380,37 +574,38 @@ class tsmake(object):
         if b_timerStart:
             other.tic()
 
-        if d_env['status']:
-            d_pftreeRun = self.pf_tree.run(timerStart = False)
-        else:
-            b_status    = False 
+        # read input slides
+        d_slides        = self.slide_filesRead(directory = self.str_inputDir)
 
-        str_startDir    = os.getcwd()
-        os.chdir(self.str_inputDir)
-        if b_status:
-            if len(self.str_extension):
-                d_inputAnalysis = self.pf_tree.tree_process(
-                                inputReadCallback       = None,
-                                analysisCallback        = self.filelist_prune,
-                                outputWriteCallback     = None,
-                                applyResultsTo          = 'inputTree',
-                                applyKey                = 'l_file',
-                                persistAnalysisResults  = True
-                )
-        os.chdir(str_startDir)
+        # read html components
+        d_html          = self.htmlSnippets_read()
+
+        # assemble the HTML page
+        d_assemble      = self.htmlPage_assemble()
+
+        # now create the output dir
+        other.mkdir(self.str_outputDir)
+
+        # write the index.html file
+        with open('%s/index.html' % self.str_outputDir, "w") as fp:
+            fp.write(d_assemble['pageHTML'])
+
+        # and copy necessary dirs
+        l_supportDirs   = ['css', 'fortunes', 'images', 'js', 'logos']
+        for str_dir in l_supportDirs:
+            copy_tree('./%s' % str_dir, '%s/%s' % (self.str_outputDir, str_dir))
 
         d_ret = {
-            'status':           b_status and d_pftreeRun['status'],
+            'status':           b_status,
             'd_env':            d_env,
-            'd_pftreeRun':      d_pftreeRun,
-            'd_inputAnalysis':  d_inputAnalysis,
+            'numSlides':        d_slides['numSlides'],
             'runTime':          other.toc()
         }
 
         if self.b_json:
             self.ret_dump(d_ret, **kwargs)
 
-        self.dp.qprint('\tReturning from pfdicom run...', level = 1)
+        self.dp.qprint('\tReturning from tslide run...', level = 1)
 
         return d_ret
         
