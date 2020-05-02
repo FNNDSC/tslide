@@ -165,6 +165,8 @@ class tsmake(object):
             if key == 'slidePrefixDOMID':   self.str_slidePrefixDOMID   = value
             if key == 'slideListGlob':      self.str_slideListGlob      = value
             if key == 'slideTextNumRows':   self.textNumRows            = int(value)
+            if key == 'slidesFile':         self.str_slidesFile         = value
+            if key == 'slidesFileBreak':    self.str_slidesFileBreak    = value
 
         # Slide lists and dictionaries
         self.lstr_slideFiles            = []
@@ -272,10 +274,12 @@ class tsmake(object):
 
         """
         d_ret = {
-            'status':       False
+            'status':           True,
+            'htmlComponents':   []
         }
         str_dataPath        = '/slideMeta/htmlComponents'
         l_htmlComponents    = list(self.data.lstr_lsnode(str_dataPath))
+        d_ret['htmlComponents'] = l_htmlComponents
         str_htmlDir         = self.data.cat('slideMeta/dirComponents/html')
         for el in l_htmlComponents:
             str_fileDP      = '%s/%s/file'      % (str_dataPath, el)
@@ -305,7 +309,7 @@ class tsmake(object):
 
         """
 
-        b_status        = False
+        b_status        = True
         str_directory   = './'
 
 
@@ -341,7 +345,7 @@ class tsmake(object):
                 'pageHTML':     HTMLstring
             }
         """
-        b_status        = False
+        b_status        = True
         str_dataPath    = '/slideMeta/htmlComponents'
         str_pageHTML    = ""
 
@@ -370,6 +374,7 @@ class tsmake(object):
             RETURN
                 astr_page       updated html code of page
             """
+            self.dp.qprint("Assembing head...", level = 2)
             astr_page   ='''%s%s<html>\n%s
             ''' % ( astr_page, 
                     self.data.cat('%s/%s/contents' % (str_dataPath, 'doctype')),
@@ -387,6 +392,7 @@ class tsmake(object):
             RETURN
                 astr_page       updated html code of page
             """
+            self.dp.qprint("Assembing nav bar and logos...", level = 2)
             astr_page += '''\n<body>
 
     <div class="metaData" id="numberOfSlides">%s</div>
@@ -438,10 +444,12 @@ class tsmake(object):
             RETURN
                 astr_page       updated html code of page
             """
+            self.dp.qprint("Assembing individual slides...", level = 2)
             astr_page += '''\n    <div class="formLayout">'''
 
             slideCount = 1
             for slide in self.ld_slide:
+                self.dp.qprint("\tAssembing slide %d..." % slideCount, level = 3)
                 str_DOMID  = "%s%d" % (self.str_slidePrefixDOMID, slideCount)
                 astr_page += '''\n
         <div id="%s-title" style="display: none;">
@@ -449,6 +457,8 @@ class tsmake(object):
         </div>\n''' % ( str_DOMID, 
                         slide['title'])
                 str_slideText   = slideText_process(slide['body'])
+                self.dp.qprint("\tslide %d:\n%s" % (slideCount, str_slideText), 
+                                level = 4)
                 astr_page += '''
         <div class="container" id="%s" name="%s" style="display: none;">
 %s
@@ -469,6 +479,7 @@ class tsmake(object):
             RETURN
                 astr_page       updated html code of page
             """
+            self.dp.qprint("Assembing footer...", level = 2)
             astr_page += "\n"
             astr_page += self.data.cat('%s/footer/contents'  % str_dataPath)
             astr_page += '''
@@ -490,6 +501,59 @@ class tsmake(object):
             'pageHTML':     str_pageHTML
         }
                 
+
+    def slidesFile_break(self):
+        """
+        DESC
+            Separate a single input text file into constituent
+            individual slide files, breaking on a given
+            break token.
+
+            Resultant files are stored in the <inputDir>, using
+            <slidePrefixDOMID>-<indexCount>.
+
+        INPUT
+            astr_slideFileName      name of input file to split
+
+        RETURN
+            d_ret {
+                'status':           True|False,
+                'numSlides':        numberOfSlideFiles,
+                'slideFileList:'    listOfSlideFilesCreated,
+                'msg':              ""
+            }
+        """
+        d_ret = {
+            'status':           False,
+            'numSlides':        0,
+            'slideFileList':    [],
+            'msg':              "No input slidesFile processed"
+        }
+
+        if len(self.str_slidesFile):
+            try:
+                fp              = open(self.str_slidesFile)
+                str_contents    = fp.read()
+                d_ret['status'] = True
+            except:
+                d_ret['status'] = False
+                d_ret['msg']    = 'File not accessible'
+            finally:
+                fp.close()
+            
+            if d_ret['status']:
+                d_ret['slideFileList']   = str_contents.split(self.str_slidesFileBreak)
+                slideCount      = 0
+                for slide in d_ret['slideFileList']:
+                    slideCount += 1
+                    with open('%s/%s%d.hjson' % (self.str_inputDir, 
+                                                self.str_slidePrefixDOMID,
+                                                slideCount), 'w') as fp:
+                        fp.write(slide)
+                d_ret['msg']        = 'Slides created successfully'
+                d_ret['numSlides']  = slideCount
+        return d_ret
+
     def filelist_prune(self, at_data, *args, **kwargs):
         """
         DESC
@@ -564,7 +628,7 @@ class tsmake(object):
         b_timerStart        = False
 
         self.dp.qprint(
-                "\tStarting tsmake run... (please be patient while running)", 
+                "Starting tsmake run... ", 
                 level = 1
                 )
 
@@ -573,6 +637,10 @@ class tsmake(object):
 
         if b_timerStart:
             other.tic()
+
+        pudb.set_trace()
+        # Process an optional input file to split into slides
+        d_inputFile     = self.slidesFile_break()
 
         # read input slides
         d_slides        = self.slide_filesRead(directory = self.str_inputDir)
@@ -593,11 +661,16 @@ class tsmake(object):
         # and copy necessary dirs
         l_supportDirs   = ['css', 'fortunes', 'images', 'js', 'logos']
         for str_dir in l_supportDirs:
+            self.dp.qprint("Copying dir %s..." % str_dir, level = 2)
             copy_tree('./%s' % str_dir, '%s/%s' % (self.str_outputDir, str_dir))
 
         d_ret = {
             'status':           b_status,
             'd_env':            d_env,
+            'd_inputFile':      d_inputFile,
+            'd_slides':         d_slides,
+            'd_html':           d_html,
+            'd_assemble':       d_assemble,
             'numSlides':        d_slides['numSlides'],
             'runTime':          other.toc()
         }
@@ -605,7 +678,6 @@ class tsmake(object):
         if self.b_json:
             self.ret_dump(d_ret, **kwargs)
 
-        self.dp.qprint('\tReturning from tslide run...', level = 1)
-
+        self.dp.qprint('Returning from tslide run...', level = 1)
         return d_ret
         
