@@ -76,6 +76,11 @@ str_desc    = Colors.CYAN + """
         '""" + Colors.NO_COLOUR + """
     }
 
+""" + Colors.GREEN + """
+    Note also that a single text file can be processed and split into
+    consituent slide files, greatly simplifying the workflow of 
+    creating html slide shows from existing text.
+
 """
 
 def synopsis(ab_shortOnly = False):
@@ -97,17 +102,19 @@ def synopsis(ab_shortOnly = False):
                 [--slidePrefixDOMID <slidePrefixDOMID>]             \\
                 [--fortune <numSlides>]                             \\
                 [--verbosity <level>]                               \\
+                [--json]                                            \\
                 [-x|--desc]                                         \\
                 [-y|--synopsis]
             
     BRIEF EXAMPLE
 
             # Assume a dir './slideShow` exists and contains files of
-            # pattern 'slide-01.json', 'slide-02.json', ...
-            make                                                    \\
-                --inputDir slideShow                                \\
-                --outputDir /tmp/slideShow                          \\
-                --slideListGlob "slide-*                
+            # pattern 'slide-01.hjson', 'slide-02.hjson', ...
+            tsmake  --outputDir /tmp/slides                         \\
+                    --inputDir slides-example                       \\
+                    --slideListGlob "slide-*"                       \\
+                    --slideTextNumRows=30                           \\
+                    --verbosity 0          
 
     '''  % (scriptName, scriptName)
 
@@ -139,6 +146,13 @@ def synopsis(ab_shortOnly = False):
         An output directory that will contain the resultant web-based 
         files suitable for completely running the created slide show.
 
+        [--slidesFile <slidesFile>]
+        A input text file to split into several constituent individual
+        slide files, stored in the <inputDir>.
+
+        [--slidesFileBreak <slidesFileBreak>]
+        The token on which to split a <slidesFile>.
+
         [--slideTextNumRows <numRows>]
         If nonzero, pad any text slide with extra "rows" (i.e. \\n) so that
         slides all have a consistent minimum number of rows.
@@ -156,6 +170,9 @@ def synopsis(ab_shortOnly = False):
         If specified build "fake" <numberOfSlides> in <inputDir> first and then
         process them.
 
+        [--json]
+        If specified, print JSON return payload from call to run method.
+
         [-x|--desc]                                     
         Provide an overview help page.
 
@@ -166,19 +183,26 @@ def synopsis(ab_shortOnly = False):
         Print internal version number and exit.
 
         [-v|--verbosity <level>]
-        Set the verbosity level. "0" typically means no/minimal output. Allows for
-        more fine tuned output control as opposed to '--quiet' that effectively
-        silences everything.
+        Set the verbosity level. "0" typically means no/minimal output. 
+        Levels:
+
+            0:  no output
+            1:  output start and stop notes
+            2:  output assembly and dircopy notes
+            3:  output per-slide creation
+            4:  output actual slide contents while assembling
 
     EXAMPLES
 
         # Assume a dir './slideShow` exists and contains files of
-        # pattern 'slide-01.json', 'slide-02.json', ...
+        # pattern 'slide-01.hjson', 'slide-02.hjson', ...
 
         %s                                                    \\
-            --inputDir slideShow                                \\
-            --outputDir /tmp/slideShow                          \\
-            --slideListGlob "slide-*                
+            --outputDir /tmp/slides                             \\
+            --inputDir slides-example                           \\
+            --slideListGlob "slide-*"                           \\
+            --slideTextNumRows=30                               \\
+            --verbosity 0          
 
         # Create a series of "fake" slides first, and then 
         # build a slow show.
@@ -198,6 +222,20 @@ def synopsis(ab_shortOnly = False):
 
 
 parser  = ArgumentParser(description = str_desc, formatter_class = RawTextHelpFormatter)
+
+parser.add_argument(
+    '--slidesFile',
+    help    = 'A single text file to be split into various slide files.',
+    dest    = 'slidesFile',
+    default = ""
+)
+
+parser.add_argument(
+    '--slidesFileBreak',
+    help    = 'The token on which to break an input slidesFile',
+    dest    = 'slidesFileBreak',
+    default = "<slidebreak>"
+)
 
 parser.add_argument(
     '--inputDir',
@@ -250,6 +288,14 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--json',
+    help    = 'if specified, print JSON return from run method',
+    dest    = 'b_json',
+    action  = 'store_true',
+    default = False
+)
+
+parser.add_argument(
     "-v", "--verbosity",
     help    = "verbosity level for app",
     dest    = 'verbosity',
@@ -293,7 +339,11 @@ if args.b_version:
     sys.exit(1)
 
 TSmake  = tsmake(**d_args)
-
-json.dumps(
-    TSmake.run(timerStart = True)
-)
+d_run   = TSmake.run(timerStart = True) 
+if args.b_json:
+    print(
+        json.dumps(
+            d_run,
+            indent = 4
+        )
+    )
