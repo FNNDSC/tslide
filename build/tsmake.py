@@ -638,7 +638,6 @@ class tsmake(object):
         if b_timerStart:
             other.tic()
 
-        pudb.set_trace()
         # Process an optional input file to split into slides
         d_inputFile     = self.slidesFile_break()
 
