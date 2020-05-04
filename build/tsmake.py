@@ -532,14 +532,15 @@ class tsmake(object):
 
         if len(self.str_slidesFile):
             try:
-                fp              = open(self.str_slidesFile)
+                fp              = open(self.str_slidesFile, "r")
                 str_contents    = fp.read()
                 d_ret['status'] = True
+                fp.close()
             except:
                 d_ret['status'] = False
-                d_ret['msg']    = 'File not accessible'
-            finally:
-                fp.close()
+                d_ret['msg']    = 'File %s/%s not accessible' % \
+                                        (self.str_inputDir,
+                                         self.str_slidesFile)
             
             if d_ret['status']:
                 d_ret['slideFileList']   = str_contents.split(self.str_slidesFileBreak)
@@ -626,6 +627,12 @@ class tsmake(object):
         b_status            = True
         d_env               = self.env_check()
         b_timerStart        = False
+        d_inputFile         = {}
+        d_slides            = {}
+        d_html              = {}
+        d_assemble          = {}
+        d_ret               = {}
+        numSlides           = 0
 
         self.dp.qprint(
                 "Starting tsmake run... ", 
@@ -641,27 +648,32 @@ class tsmake(object):
         # Process an optional input file to split into slides
         d_inputFile     = self.slidesFile_break()
 
-        # read input slides
-        d_slides        = self.slide_filesRead(directory = self.str_inputDir)
+        if d_inputFile['status']:
+            # read input slides
+            d_slides        = self.slide_filesRead(directory = self.str_inputDir)
+            numSlides       = d_slides['numSlides']
+            # read html components
+            if d_slides['status']:
+                d_html          = self.htmlSnippets_read()
 
-        # read html components
-        d_html          = self.htmlSnippets_read()
+                # assemble the HTML page
+                if d_html['status']:
+                    d_assemble      = self.htmlPage_assemble()
 
-        # assemble the HTML page
-        d_assemble      = self.htmlPage_assemble()
+                    # now create the output dir
+                    other.mkdir(self.str_outputDir)
 
-        # now create the output dir
-        other.mkdir(self.str_outputDir)
+                    # write the index.html file
+                    with open('%s/index.html' % self.str_outputDir, "w") as fp:
+                        fp.write(d_assemble['pageHTML'])
 
-        # write the index.html file
-        with open('%s/index.html' % self.str_outputDir, "w") as fp:
-            fp.write(d_assemble['pageHTML'])
-
-        # and copy necessary dirs
-        l_supportDirs   = ['css', 'fortunes', 'images', 'js', 'logos']
-        for str_dir in l_supportDirs:
-            self.dp.qprint("Copying dir %s..." % str_dir, level = 2)
-            copy_tree('./%s' % str_dir, '%s/%s' % (self.str_outputDir, str_dir))
+                    # and copy necessary dirs
+                    l_supportDirs   = ['css', 'fortunes', 'images', 'js', 'logos']
+                    for str_dir in l_supportDirs:
+                        self.dp.qprint("Copying dir %s..." % str_dir, level = 2)
+                        copy_tree('./%s' % str_dir, '%s/%s' % 
+                                                (self.str_outputDir, 
+                                                str_dir))
 
         d_ret = {
             'status':           b_status,
@@ -670,7 +682,7 @@ class tsmake(object):
             'd_slides':         d_slides,
             'd_html':           d_html,
             'd_assemble':       d_assemble,
-            'numSlides':        d_slides['numSlides'],
+            'numSlides':        numSlides,
             'runTime':          other.toc()
         }
 
