@@ -547,7 +547,7 @@ class tsmake(object):
                 slideCount      = 0
                 for slide in d_ret['slideFileList']:
                     slideCount += 1
-                    with open('%s/%s%d.hjson' % (self.str_inputDir, 
+                    with open('%s/%s%03d.hjson' % (self.str_inputDir, 
                                                 self.str_slidePrefixDOMID,
                                                 slideCount), 'w') as fp:
                         fp.write(slide)
