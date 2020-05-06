@@ -409,7 +409,7 @@ class tsmake(object):
             astr_page += "\n"
             return astr_page
 
-        def slideText_process(astr_slideText):
+        def slideText_process(astr_slideText, a_slideCount):
             """
             DESC
                 Perform some optional processing on slide text.
@@ -417,13 +417,17 @@ class tsmake(object):
                 This essentially means removing the ''' chars and
                 optionally padding to fixed number of rows.
 
+                In addition, any 'order-X' ids are replaced with
+                'order-<slide>-X' ids.
+
             INPUT
                 astr_slideText      text of slide
 
             RETURN
                 astr_slideText      updated text
             """
-            astr_slideText  = astr_slideText.replace("'''", '')            
+            astr_slideText  = astr_slideText.replace("'''", '')
+            astr_slideText  = astr_slideText.replace('order', 'order-%d' % a_slideCount)            
             rows            = astr_slideText.count('\n')
             if rows < self.textNumRows:
                 rowsToAdd       = self.textNumRows - rows
@@ -456,7 +460,7 @@ class tsmake(object):
             %s
         </div>\n''' % ( str_DOMID, 
                         slide['title'])
-                str_slideText   = slideText_process(slide['body'])
+                str_slideText   = slideText_process(slide['body'], slideCount)
                 self.dp.qprint("\tslide %d:\n%s" % (slideCount, str_slideText), 
                                 level = 4)
                 astr_page += '''
