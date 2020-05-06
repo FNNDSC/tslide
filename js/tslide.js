@@ -237,8 +237,10 @@ function Page() {
     ];
 
     // DOM keys related to the slides
-    this.l_slide            = [];
-    this.str_slideIDprefix  = "";
+    this.l_slide                = [];   // Simple index of DOMslideIDs
+    this.l_snippetsPerSlide     = [];   // Number of snippets per slide
+    this.l_snippetPerSlideON    = [];   // Running count of ON snippets
+    this.str_slideIDprefix      = "";
     this.init();
 
     // DOM obj elements --  Each object has a specific list of page key
@@ -254,6 +256,13 @@ function Page() {
 Page.prototype = {
     constructor:    Page,
 
+    substr_count:                       function(astr_substr, astr_text) {
+        let str_help = `
+            Count and return the occurences of a substring in a string.
+        `;
+        return (astr_text.match(new RegExp(astr_substr, 'gi')) || []).length;
+    },
+
     init:                               function() {
         let str_help = `
             Initialize some member variables based on meta data
@@ -265,6 +274,81 @@ Page.prototype = {
         for(let i=1; i<=numberOfSlides; i++) {
             this.l_slide.push(this.str_slideIDprefix + i);
         }
+
+        // Parse for snippets per slide
+        for(const DOMslideID of this.l_slide) {
+            str_slide           = document.getElementById(DOMslideID).outerHTML;
+            snippetsPerSlide    = this.substr_count('snippet', str_slide);
+            this.l_snippetsPerSlide.push(snippetsPerSlide);
+            this.l_snippetPerSlideON.push(0);
+        }
+    },
+
+    retreat_overSnippets:               function() {
+        let str_help = `
+            For a given slide, this retreats over the snippets, turning 
+            each current snippet OFF. 
+
+            Return:
+            true:       All snippets have been toggled to display: none
+            false:      Some snippets still ON
+        `;
+        let thisSlide   = this.currentSlide-1
+        // Check if all snippets are OFF, and if so, return with a true
+        if(this.l_snippetPerSlideON[thisSlide] == 0)
+            return true;
+
+        let snippetToDisplayOFF         = this.l_snippetPerSlideON[thisSlide];
+        let DOMsnippet                  = document.getElementById(
+                                            'order-' + this.currentSlide + 
+                                            '-' + snippetToDisplayOFF
+                                            );
+        DOMsnippet.style.display        = 'none';
+        this.l_snippetPerSlideON[thisSlide] -= 1;
+        return false;
+        
+    },
+
+    advance_overSnippets:               function() {
+        let str_help = `
+            For a given slide, this advances over the snippets, turning
+            each current snippet ON.
+
+            Return:
+            true:       All snippets have been toggled to display: block
+            false:      Some snippets still OFF
+        `;
+        let thisSlide   = this.currentSlide-1
+        // Check if all snippets are ON, and if so, return with a true
+        if(this.l_snippetPerSlideON[thisSlide] == 
+            this.l_snippetsPerSlide[thisSlide]) 
+            return true;
+
+        let snippetToDisplay            = this.l_snippetPerSlideON[thisSlide] + 1;
+        let DOMsnippet                  = document.getElementById(
+                                                'order-' + this.currentSlide +
+                                                '-' + snippetToDisplay
+                                            );
+        DOMsnippet.style.display    = 'block';
+        this.l_snippetPerSlideON[thisSlide]    += 1;
+        return false;
+    },
+
+    allSnippets_displaySet:             function(astr_state, a_slideIndex) {
+        let str_help = `
+            For a given slide <a_slideIndex> set the display state of (any)
+            snippet elements to <astr_state>. Note that the <a_slideIndex>
+            counts starting from 1 not 0.
+        `;
+        snippets    = this.l_snippetsPerSlide[a_slideIndex-1];
+        for(let snippet=1; snippet <= snippets; snippet++) {
+            DOMsnippet = document.getElementById(
+                            'order-' + a_slideIndex +
+                            '-' + snippet
+            );
+            DOMsnippet.style.display =  astr_state;
+        }
+        this.l_snippetPerSlideON[a_slideIndex-1] = 0;
     },
 
     advance_toFirst:                    function() {
@@ -315,6 +399,13 @@ Page.prototype = {
 
     slide_transition:                   function(index_currentSlide, 
                                                  index_followingSlide) {
+        let str_help = `
+            Do the actual transition from one slide to another, 
+            as well as update the running slide counter in the footer.
+
+            Also, on the next slide, all 'snippets' are set to 'none'.
+        `;
+
         let DOMID_currentSlide      = document.getElementById(
                                             this.str_slideIDprefix + index_currentSlide
                                         );
@@ -330,6 +421,7 @@ Page.prototype = {
 
         DOMID_currentSlide.style.display    = "none";
         DOMID_followingSlide.style.display  = "block";
+        // this.allSnippets_displaySet('none', index_followingSlide);
         if(DOMID_slideTitle !== null) {
             DOMID_pageTitle.innerHTML = DOMID_slideTitle.innerHTML;
         } else { 
@@ -373,7 +465,8 @@ Page.prototype = {
 
         `;
 
-        this.advance_toNext();
+        if(this.advance_overSnippets())
+            this.advance_toNext();
     },
 
     // Page
@@ -390,8 +483,8 @@ Page.prototype = {
 
             Call the previous slide.
         `;
-
-        this.advance_toPrevious();
+        if(this.retreat_overSnippets())
+            this.advance_toPrevious();
     },
 
     // Page
