@@ -15,6 +15,7 @@ from        distutils.dir_util  import  copy_tree
 # Imports for the "fortune" auto-generating
 import      fortune
 import      cowsay
+from        cowpy               import cow
 from        pyfiglet            import Figlet
 # cowsay.tux(f.renderText(fortune.get_random_fortune('./fortunes')))                                                                                                   
 
@@ -116,6 +117,183 @@ class D(S):
             C_snode.str_blockIndent(str(S.T), 3, 8),
             level   = 1,
             syslog  = False) 
+
+class SMarkDown(object):
+    """
+        The directive for markdown is a markdown marker string, 
+        followed by a "function" string followed by optional
+        "args" for that function. The arguments are separated 
+        by commas. The remainder of the string line is taken to be
+        the string to which apply the markdown.
+
+        So, markdown patterns are:
+
+            <mdMarker><mdFunction>_<mdArg1>,<mdArg2>,...<mdArgN> string
+
+        for example:
+
+        _#_o_1 bullet 1 : create a snippet of "ordering" 1, with text 'bullet 1'
+        _#_o_2 bullet 2 : create a snippet of "ordering" 2, with text 'bullet 2'
+
+        _#_font_<figletFont> text : Render <text> with <figletFont>.
+        See http://www.jave.de/figlet/fonts/overview.html for figlet fonts.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Constructor, basically set some internal vars.
+        """
+        self.__name__           = 'SMarkDown'
+        self.verbosityLevel     = 1
+        self.mdMarker           = "_#_"
+        self.dp                         = pfmisc.debug(    
+                                            verbosity   = self.verbosityLevel,
+                                            within      = self.__name__
+                                            )
+
+    def snippetMake(self, al_argList, astr_text):
+        """
+            Replace the <astr_text> with the relevant snippet equivalent.
+        """
+        d_ret   = {
+            'status':   True,
+            'result':   "",
+            'error':    ""
+        }
+
+        str_tagHTML     = ""
+        # pudb.set_trace()
+        str_order       = al_argList[0]
+        if len(al_argList) >1:
+            str_tagHTML = al_argList[1]
+        d_ret['result'] = '''</pre>
+</div>
+<br><div class = "snippet" id="order-''' + str_order + '''"''' +str_tagHTML+'''>
+<pre>
+''' + astr_text
+
+        return d_ret
+
+    def fontify(self, al_argList, astr_text):
+        """
+            Replace the <astr_text> with a figlet font of the same.
+            If invalid font, then return the astr_text unchanged.
+        """
+        d_ret   = {
+            'status':   False,
+            'result':   "",
+            'error':    ""
+        }
+        str_font    = al_argList[0]
+        try:
+            f               = Figlet(font=str_font)
+            astr_text       = f.renderText(astr_text)
+            d_ret['status'] = True
+            d_ret['result'] = astr_text
+        except Exception as e:
+            d_ret['error']  = str(e) + " font not found"
+            
+        return d_ret
+
+    def cowpy(self, al_argList, astr_text):
+        """
+            Place the <astr_text> in a "cowpy" bubble with an
+            optional character spec. Default character is 'tux'. 
+            
+        """
+        d_ret   = {
+            'status':   False,
+            'result':   "",
+            'error':    ""
+        }
+        if len(al_argList):
+            str_char        = al_argList[0]
+        else:
+            str_char        = 'moose'
+        try:
+            if str_char != 'random':
+                cow_cls         = cow.get_cow(str_char)
+                betsy           = cow_cls()
+                d_ret['result'] = betsy.milk(astr_text)
+            else:
+                d_ret['result'] = cow.milk_random_cow(astr_text)
+            d_ret['status'] = True
+        except Exception as e:
+            d_ret['error']  = str(e) + " character not found"
+            
+        return d_ret
+
+    def markdown_process(self, astr_commandArg, astr_text):
+        """
+            Process the markdown by calling the appropriate
+            handler on the text
+        """
+        d_ret = {
+            'status':   False,
+            'result':   "",
+            'error':    "",
+        }
+        l_markdownComArg    = astr_commandArg.split('_')
+        str_command         = l_markdownComArg[0]
+        l_argList           = l_markdownComArg[1].split(',')
+        if str_command == 'o':
+            d_ret['status']     = True
+            d_ret['d_result']   = self.snippetMake(l_argList, astr_text)
+        if str_command == 'font':
+            d_ret['status']     = True
+            d_ret['d_result']   = self.fontify(l_argList, astr_text)
+        if str_command == 'cowpy':
+            d_ret['status']     = True
+            d_ret['d_result']   = self.cowpy(l_argList, astr_text)
+
+        return d_ret
+
+    def markdown_do(self, astr_line):
+        """
+            Process the markdown directive in the <astr_line> and
+            branch to appropriate handler.
+        """
+        d_ret       = {
+            'status':       False,
+            'd_markdown':   {}
+        }
+        # split astr_line into a list and find the element 
+        # containing the this.mdMarker
+        l_words     = astr_line.split()
+        for str_word in l_words:
+            if self.mdMarker in str_word:
+                str_commandArg      = str_word.split(self.mdMarker)[1]
+                str_text            = astr_line.split(str_word)[1]
+                d_ret['d_markdown'] = self.markdown_process(str_commandArg, str_text)
+                d_ret['status']     = True
+                break
+        return d_ret
+
+    def run(self, astr_body):
+        """
+            Parse the <astr_body> for certain markdown
+            and replace with suitable HTML, which is 
+            returned.
+        """
+        # Split the input <astr_body> into an array of lines
+        l_lines     = astr_body.split("\n")
+        l_newLines  = []
+
+        # find and process lines that contain the markdown marker   
+        for str_line in l_lines:
+            if self.mdMarker in str_line:
+                d_do        = self.markdown_do(str_line)
+                if d_do['status']:
+                    if d_do['d_markdown']['status']:
+                        if d_do['d_markdown']['d_result']['status']:
+                            str_line    = d_do['d_markdown']['d_result']['result']
+                        else:
+                            self.dp.qprint('Error returned:\n%s' % \
+                                            json.dumps(d_do, indent=4),
+                                            comms = 'error')
+            l_newLines.append(str_line)
+        str_body    = '\n'.join(l_newLines)
+        return str_body
 
 class tsmake(object):
     """
@@ -219,6 +397,7 @@ class tsmake(object):
 
         # pudb.set_trace()
         self.declare_selfvars(*args, **kwargs)
+        self.markdown   = SMarkDown()
 
     def env_check(self, *args, **kwargs):
         """
@@ -414,8 +593,9 @@ class tsmake(object):
             DESC
                 Perform some optional processing on slide text.
 
-                This essentially means removing the ''' chars and
-                optionally padding to fixed number of rows.
+                First, parse and process any "markdown", then remove
+                any ''' chars in the text and optionally pad to a 
+                fixed number of rows.
 
                 In addition, any 'order-X' ids are replaced with
                 'order-<slide>-X' ids.
@@ -426,15 +606,31 @@ class tsmake(object):
             RETURN
                 astr_slideText      updated text
             """
+            def rows_addToBottom(astr_slideText):
+                """
+                A simple method that adds some "blank" lines to
+                <pre> formatted slides.
+
+                In some ways this is deprecated since results are
+                somewhat haphazard with more complex slides.
+                """
+                rows            = astr_slideText.count('\n')
+                if self.textNumRows and rows < self.textNumRows:
+                    rowsToAdd       = self.textNumRows - rows
+                    str_rowsToAdd   = '\n' * rowsToAdd + '</pre>'
+                    str_replaceFrom = '</pre>'
+                    maxreplace      = 1
+                    astr_slideText  = str_rowsToAdd.join(
+                                        astr_slideText.rsplit(
+                                            str_replaceFrom, maxreplace
+                                        )
+                                    )
+                return astr_slideText
+
+            astr_slideText  = self.markdown.run(astr_slideText)
             astr_slideText  = astr_slideText.replace("'''", '')
             astr_slideText  = astr_slideText.replace('order', 'order-%d' % a_slideCount)            
-            rows            = astr_slideText.count('\n')
-            if rows < self.textNumRows:
-                rowsToAdd       = self.textNumRows - rows
-                str_rowsToAdd   = '\n' * rowsToAdd + '</pre>'
-                str_replaceFrom = '</pre>'
-                maxreplace      = 1
-                astr_slideText  = str_rowsToAdd.join(astr_slideText.rsplit(str_replaceFrom, maxreplace))
+            astr_slideText  = rows_addToBottom(astr_slideText)
             return astr_slideText
 
         def body_slidesAssemble(astr_page):
@@ -448,26 +644,142 @@ class tsmake(object):
             RETURN
                 astr_page       updated html code of page
             """
+
+            def title_make(hjsonslide, str_DOMID):
+                """
+                Return the HTML for the title of the slide.
+                """
+                str_title =  '''\n
+                <!--------------------------- %s --------------------------->
+                <div id="%s-title" style="display: none;">
+                    %s
+                </div>\n''' % ( str_DOMID,
+                                str_DOMID, 
+                                slide['title'])
+                return str_title
+
+            def slideStyle_determine(hjsonslide):
+                """
+                Simply determine the style to apply, based on 
+                parsing the hjson slide.
+
+                RETURN:
+                A string denoting the style to apply:
+
+                    'default'
+                    'oldStyleTerminal'
+
+                """
+                if 'body-class' in hjsonslide:
+                    str_slideClass = slide['body-class']
+                    if 'terminal' in str_slideClass:
+                        return 'oldStyleTerminal'
+                return 'default'
+
+            def default_styleApply( hjsonslide, 
+                                    slideCount,
+                                    str_slideStyle,
+                                    str_slideClass):
+                """
+                Apply the default style to the slide.
+
+                INPUT:
+                The HJSON slide
+
+                RETURN:
+                The slide <div> HTML string
+                """
+                str_slideText   = slideText_process(hjsonslide['body'], slideCount)
+                if 'body-style' in hjsonslide:
+                    str_slideStyle = 'style="display:none; %s"' % slide['body-style']
+                str_slideDiv    = '''
+                <div class="%s" id="%s" name="%s" %s>
+%s
+
+                </div>
+                <!--------------------------- end --------------------------->
+         
+        ''' % (     str_slideClass, str_DOMID, str_DOMID, str_slideStyle, 
+                    str_slideText)
+                return str_slideDiv
+
+            def oldStyleTerminal_styleApply(hjsonslide, 
+                                            slideCount,
+                                            str_slideStyle,
+                                            str_slideClass):
+                """
+                Define an old-style terminal
+
+                INPUT:
+                The HJON slide
+
+                RETURN:
+                The slide <div> HTML string
+                """
+                str_slideText   = slideText_process(hjsonslide['body'], slideCount)
+                if 'body-style' in hjsonslide:
+                    str_slideStyle = 'style="display:none; %s"' % slide['body-style']
+                str_slideDiv    = '''
+                <section class = "terminal">
+
+                        <div class="%s" id="%s" name="%s" %s>\n%s
+                        </div>
+
+                <div class="interlace"></div>
+                <!--- <div class="CRT"></div> -->
+
+                </section>
+
+
+                <!--------------------------- end --------------------------->
+         
+        ''' % (     str_slideClass, str_DOMID, str_DOMID, str_slideStyle, 
+                    str_slideText)
+                return str_slideDiv
+
+
             self.dp.qprint("Assembing individual slides...", level = 2)
             astr_page += '''\n    <div class="formLayout">'''
-
             slideCount = 1
             for slide in self.ld_slide:
+                str_slide       = ""
                 self.dp.qprint("\tAssembing slide %d..." % slideCount, level = 3)
-                str_DOMID  = "%s%d" % (self.str_slidePrefixDOMID, slideCount)
-                astr_page += '''\n
-        <div id="%s-title" style="display: none;">
-            %s
-        </div>\n''' % ( str_DOMID, 
-                        slide['title'])
-                str_slideText   = slideText_process(slide['body'], slideCount)
-                self.dp.qprint("\tslide %d:\n%s" % (slideCount, str_slideText), 
+                str_DOMID       = "%s%d" % (self.str_slidePrefixDOMID, slideCount)
+                str_slideStyle  = 'style="display: none;"'
+                str_slideClass  = "container slide "
+
+                str_slide      += title_make(slide, str_DOMID)
+                slideStyle      = slideStyle_determine(slide)
+                str_slide      += eval('''%s_styleApply(slide, 
+                                                        slideCount,
+                                                        str_slideStyle,
+                                                        str_slideClass)''' % slideStyle)
+
+                # str_slideText   = slideText_process(slide['body'], slideCount)
+                # if 'body-style' in slide:
+                #     str_slideStyle = 'style="display:none; %s"' % slide['body-style']
+                # if 'body-class' in slide:
+                #     str_slideClass += slide['body-class']
+                #     if 'noisy' in str_slideClass:
+                #         str_slideBottom +='''
+                #                     </div>
+                #                     <div class="piece scanlines noclick"></div>
+                #                     <div class="piece glow noclick"></div>
+                #                     </div>
+                #         '''
+                self.dp.qprint("\tslide %d:\n%s" % (slideCount, str_slide), 
                                 level = 4)
-                astr_page += '''
-        <div class="container" id="%s" name="%s" style="display: none;">
-%s
-        </div>''' % (str_DOMID, str_DOMID, str_slideText)
+#                 astr_page += '''
+#         <div class="%s" id="%s" name="%s" %s>
+# <div class="frame">
+# <div class="piece output">
+# %s
+
+# %s
+#         </div>''' % (   str_slideClass, str_DOMID, str_DOMID, 
+#                         str_slideStyle, str_slideText, str_slideBottom)
                 slideCount += 1
+                astr_page  += str_slide
             astr_page += '\n        <div class="modal"><!-- Place at bottom of page --></div>\n'
             astr_page += "    </div>"
             return astr_page
@@ -536,7 +848,9 @@ class tsmake(object):
 
         if len(self.str_slidesFile):
             try:
-                fp              = open(self.str_slidesFile, "r")
+                fp              = open("%s/%s" % 
+                                        (self.str_inputDir, 
+                                         self.str_slidesFile), "r")
                 str_contents    = fp.read()
                 d_ret['status'] = True
                 fp.close()
