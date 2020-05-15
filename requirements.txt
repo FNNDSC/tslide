@@ -1,5 +1,6 @@
 fortune
 cowsay
+cowpy
 pyfiglet
 pfstate
 python-swiftclient
