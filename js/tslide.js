@@ -212,16 +212,163 @@ URL.prototype = {
 }
 
 /////////
-///////// A Page object that describes the HTML version elements from a 
-///////// logical perspective.
+///////// An initial markdown-ish object that understands some 
+///////// markdown in a string of text and converts to HTML
 /////////
-
-function Page() {
+function SMarkDown() {
     this.str_help = `
 
         The Page object defines/interacts with the html page.
 
         The page element strings are "defined" here, and letious
+        DOM objects that can interact with these elements are also
+        instantiated.
+
+        The directive for markdown is a markdown marker string, 
+        followed by a "function" string followed by optional
+        "args" for that function. The arguments are separated 
+        by commas. The remainder of the string line is taken to be
+        the string to which apply the markdown.
+
+        So, markdown patterns are:
+
+            <mdMarker><mdFunction>_<mdArg1>,<mdArg2>,...<mdArgN> string
+
+        for example:
+
+        _#_o_1 bullet 1 : create a snippet of "ordering" 1, with text 'bullet 1'
+        _#_o_2 bullet 2 : create a snippet of "ordering" 2, with text 'bullet 2'
+
+        _#_font_<figletFont> text : Render <text> with <figletFont>.
+        See http://www.jave.de/figlet/fonts/overview.html for figlet fonts.
+    `;
+
+    this.str_textWithMarkDown       = "";
+    this.str_textWithHTML           = "";
+
+    this.mdMarker                   = "_#_";
+
+}
+
+SMarkDown.prototype = {
+    constructor:                    SMarkDown,
+
+    snippetMake:                function(al_argList, astr_text) {
+        let str_help = `
+
+            Replace the <astr_text> with the relevant snippet equivalent.
+        
+        `;
+
+        str_order   = al_argList[0];
+        astr_text   = `
+        </pre>
+        </div>
+        <div class = "snippet" id="order-` + str_order + `"
+        <pre>
+        ` + astr_text + `
+        </pre>
+        </div>
+        `;
+        return astr_text;
+
+    },
+
+    fontify:                    function(al_argList, astr_text) {
+        let str_help = `
+
+            Replace the <astr_text> with a figlet font of the same.
+            If invalid font, then return the astr_text unchanged.
+        
+        `;
+        str_font    = al_argList[0];
+
+    },
+
+    markdown_process:           function(astr_commandArg, astr_text) {
+        let str_help = `
+
+            Perform the actual markdown execution.
+        
+        `;
+        d_ret = {
+            'status':   false,
+            'result':   ''
+        }
+
+        l_markdownComArg    = astr_commandArg.split('_')
+        str_command         = l_markdownComArg[0];
+        l_argList           = l_markdownComArg[1].split(',')
+        switch(str_command) {
+            case 'o':   
+                d_ret['status'] = true;
+                d_ret['result'] = this.snippetMake(l_argList, astr_text);
+                break;
+            case 'font':
+                d_ret['status'] = true;
+                d_ret['result'] = this.fontify(l_argList, astr_text);
+                break;
+        }
+        return d_ret;
+    },
+
+
+    markdown_do:               function(astr_line) {
+        let str_help = `
+
+            Process the markdown directive in the <astr_line> and
+            branch to appropriate handler.
+        
+        `;
+
+        // split astr_line into a list and find the element 
+        // containing the this.mdMarker
+        let l_words     = astr_line.split(/(\s+)/);
+        for(let str_word of l_words) {
+            if(str_word.includes(this.mdMarker)) {
+                let str_commandArg  = str_word.split(this.mdMarker)[1];
+                let str_text        = astr_line.split(str_word)[1];
+                d_markdown          = this.markdown_process(str_commandArg, str_text);
+            }
+        }
+
+    },
+
+    parse:                          function(astr_text) {
+        let str_help = `
+
+            Parse the <astr_text> for certain markdown
+            and replace with suitable HTML, which is 
+            returned.
+        
+        `;
+
+        // Split the input string into an array
+        let l_slide     = astr_text.split("\n")
+        let d_parsed    = {};
+
+        // find lines that contain the this.mdMarker
+        for(let str_line of l_slide) {
+            if(str_line.includes(this.mdMarker))
+                d_parsed    = this.markdown_do(str_line);
+        }
+
+    },
+
+}
+
+
+/////////
+///////// A Page object that describes the HTML version elements from a 
+///////// logical perspective.
+/////////
+
+function Page() {
+    let str_help = `
+
+        The Page object defines/interacts with the html page.
+
+        The page element strings are "defined" here, and various
         DOM objects that can interact with these elements are also
         instantiated.
         
