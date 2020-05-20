@@ -78,7 +78,7 @@ body {
 
 .slide {
     display:block;
-    height: 600px;
+    height: 100%;
 }
 
 #slideProgress {
