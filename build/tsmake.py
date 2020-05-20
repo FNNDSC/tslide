@@ -135,6 +135,23 @@ class SMarkDown(object):
         _#_o_1 bullet 1 : create a snippet of "ordering" 1, with text 'bullet 1'
         _#_o_2 bullet 2 : create a snippet of "ordering" 2, with text 'bullet 2'
 
+        Args for bullet points:
+
+            _#_o_<N>,<HTMLStyle>,<tabPadding>
+
+            <N>             bullet ordering. Must be unique on a slide; 
+                            multiple bullets with the same order <N> will
+                            crash the browser.
+
+            <HTMLStyle>     a quoted string that will be added to each 
+                            snippet line. The following macros are understood:
+                            'l':    'style="float: left;"'
+                            'r':    'style="float: right;"
+
+            <tabPadding>    Optionally pre-pad the bullet with multiples of
+                            8 space chars.            
+
+
         _#_font_<figletFont> text : Render <text> with <figletFont>.
         See http://www.jave.de/figlet/fonts/overview.html for figlet fonts.
     """
@@ -161,16 +178,73 @@ class SMarkDown(object):
             'error':    ""
         }
 
-        str_tagHTML     = ""
-        # pudb.set_trace()
-        str_order       = al_argList[0]
-        if len(al_argList) >1:
-            str_tagHTML = al_argList[1]
-        d_ret['result'] = '''</pre>
-</div>
-<br><div class = "snippet" id="order-''' + str_order + '''"''' +str_tagHTML+'''>
-<pre>
-''' + astr_text
+        def args_parse(al_argList):
+            """
+                Parse the snippet argument list. Snippet arguments conform
+                to the following pattern:
+
+                    <key1>~<value1>,<key2>~<value2>,...
+
+                where the following keys are understood:
+
+                    b~<N>           bullet ordering, i.e.   b~01, b~02, ...
+                                    Note that bullet ordering is the only
+                                    argument that does not require the 
+                                    preceding "b~" -- see below.
+                    f~<floatStyle>  HTML text for the float style
+                                        f~l     == "float: left;"
+                                        f~r     == "float: right;"
+                    t~<tabs[<width>> number of tabs to insert before bullet
+                                        and optional [<width>
+                                        t~4     == 4 tabs (width 8)
+                                        t~4[2   == 4 tabs (width 2)
+                    z~<font-size>   font-size style specifier
+                                        z~150%  == "font size: 150%;"
+
+                Note that the ordering key~value is the only pairing where
+                only a value can be provided and they key is assumed to
+                be the bullet ordering. In other words, the following are
+                equivalent source specifications for a snippet order:
+
+                    _#_o_01
+                    _#_o_b~01
+
+            """
+            d_ret = {
+                'order':    0,
+                'style':    "",
+                'padding':  ""
+            }
+            tabWidth    = 8
+            str_style   = ""
+            for arg in al_argList:
+                try:
+                    (key, val)  = arg.split('~')
+                except:
+                    d_ret['order'] = int(arg)
+                    continue
+                if key == 'b':
+                    d_ret['order']  = int(val)
+                    continue
+                if key == 'f':  
+                    str_style   += "float: " + "left;" if val == 'l' else "right;"
+                    continue
+                if key == 't': 
+                    try:
+                        (tab, width) = val.split('[')
+                        tabWidth    = width
+                    except:
+                        tab = val
+                    d_ret['padding'] = " " * int(tab) * tabWidth
+                    continue
+                if key == 'z':
+                    str_style   += "font-size: %s" % val + ";"
+            d_ret['style'] = 'style= "' + str_style + '"'
+            return d_ret 
+
+
+        d_context       = args_parse(al_argList)
+        d_ret['result'] += '''<br><div class = "snippet" id="order-''' + str(d_context['order']) + '''" ''' +d_context['style']+'''><pre>''' + d_context['padding']  + astr_text + '''</pre></div>'''
 
         return d_ret
 
@@ -223,6 +297,26 @@ class SMarkDown(object):
             
         return d_ret
 
+    def lineWidthBound(self, al_argList, astr_text):
+        """
+            Hard limit the <astr_text> to only the first
+            <length> characters
+        """
+        d_ret   = {
+            'status':   False,
+            'result':   "",
+            'error':    ""
+        }
+        length              = int(al_argList[0])
+        try:
+            astr_text       = astr_text[:length]
+            d_ret['status'] = True
+            d_ret['result'] = astr_text
+        except Exception as e:
+            d_ret['error']  = str(e) + " line limit failed"
+            
+        return d_ret
+
     def markdown_process(self, astr_commandArg, astr_text):
         """
             Process the markdown by calling the appropriate
@@ -245,6 +339,9 @@ class SMarkDown(object):
         if str_command == 'cowpy':
             d_ret['status']     = True
             d_ret['d_result']   = self.cowpy(l_argList, astr_text)
+        if str_command == 'w':
+            d_ret['status']     = True
+            d_ret['d_result']   = self.lineWidthBound(l_argList, astr_text)
 
         return d_ret
 
@@ -653,7 +750,7 @@ class tsmake(object):
                 <!--------------------------- %s --------------------------->
                 <div id="%s-title" style="display: none;">
                     %s
-                </div>\n''' % ( str_DOMID,
+                </div> <!--- title div --->\n''' % ( str_DOMID,
                                 str_DOMID, 
                                 slide['title'])
                 return str_title
@@ -695,12 +792,11 @@ class tsmake(object):
                 str_slideDiv    = '''
                 <div class="%s" id="%s" name="%s" %s>
 %s
-
-                </div>
-                <!--------------------------- end --------------------------->
+                </div> <!--- slide div --->
+                <!--------------------------- slide-%d end ----------------------->
          
         ''' % (     str_slideClass, str_DOMID, str_DOMID, str_slideStyle, 
-                    str_slideText)
+                    str_slideText, slideCount)
                 return str_slideDiv
 
             def oldStyleTerminal_styleApply(hjsonslide, 
