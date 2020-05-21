@@ -186,8 +186,8 @@ td, th {
     /* font-family:           "Fira Mono", 'Consolas'; */
     position:              relative;
     margin-bottom:         -3px;
-    margin-left:           84px;
-    margin-right:          84px;
+    /* margin-left:           84px;
+    margin-right:          84px; */
     /* padding-left:          20px; */
     border-radius:         5px;
 }
@@ -223,7 +223,8 @@ br {
     background-color: #404346;
     border: solid 1px #a1a1a1;
     padding: 10px;
-    width: 1240px;
+    /* width: 1240px; */
+    width: 80%;
     height: 100%;
     margin-left: auto;
     margin-right:auto;
