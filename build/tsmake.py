@@ -83,6 +83,10 @@ class D(S):
                                 'file':     'logos.html',
                                 'contents': ''
                             },
+                            'title':   {
+                                'file':     'title.html',
+                                'contents': ''
+                            },
                             'body':     {
                                 'file':     'body.html',
                                 'contents': ''
@@ -426,16 +430,18 @@ class tsmake(object):
         #
         # Object desc block
         #
-        self.args                       = kwargs
-        self.__name__                   = "tsmake"
+        self.args                               = kwargs
+        self.__name__                           = "tsmake"
+
+        # Init some vars
+        self.b_noLogos                          = False
 
         # Parse CLI args
         for key, value in kwargs.items():
             if key == 'inputDir':           self.str_inputDir           = value
             if key == "outputDir":          outputDir_process(value) 
             if key == 'verbosity':          self.verbosityLevel         = int(value)
-            if key == 'json':               self.b_json                 = bool(value)
-            if key == 'followLinks':        self.b_followLinks          = bool(value)
+            if key == 'b_noLogos':          self.b_noLogos              = bool(value)
             if key == 'fortune':            self.fortuneSlides          = int(value)
             if key == 'slidePrefixDOMID':   self.str_slidePrefixDOMID   = value
             if key == 'slideListGlob':      self.str_slideListGlob      = value
@@ -444,9 +450,9 @@ class tsmake(object):
             if key == 'slidesFileBreak':    self.str_slidesFileBreak    = value
 
         # Slide lists and dictionaries
-        self.lstr_slideFiles            = []
-        self.ld_slide                   = []
-        self.str_extension              = "hjson"
+        self.lstr_slideFiles                    = []
+        self.ld_slide                           = []
+        self.str_extension                      = "hjson"
 
         #----------------- state --------------------
         # There are some implicit assumptions in the 
@@ -461,24 +467,23 @@ class tsmake(object):
         self.data                               = self.state.T
 
         # pftree dictionary
-        self.pf_tree                    = None
-        self.numThreads                 = 1
+        self.pf_tree                            = None
+        self.numThreads                         = 1
 
         # Some output handling
-        self.str_stdout                 = ''
-        self.str_stderr                 = ''
-        self.exitCode                   = 0
+        self.str_stdout                         = ''
+        self.str_stderr                         = ''
+        self.exitCode                           = 0
 
         # Convenience vars
-        self.b_json                     = False
-        self.dp                         = pfmisc.debug(    
-                                            verbosity   = self.verbosityLevel,
-                                            within      = self.__name__
-                                            )
-        self.log                        = pfmisc.Message()
-        self.log.syslog(True)
-        self.tic_start                  = 0.0
-        self.pp                         = pprint.PrettyPrinter(indent=4)
+        self.dp                                 = pfmisc.debug(    
+                                                    verbosity   = self.verbosityLevel,
+                                                    within      = self.__name__
+                                                    )
+        self.log                                = pfmisc.Message()
+        self.log.syslog(True)       
+        self.tic_start                          = 0.0
+        self.pp                                 = pprint.PrettyPrinter(indent=4)
 
     def __init__(self, *args, **kwargs):
         """
@@ -657,6 +662,67 @@ class tsmake(object):
                     self.data.cat('%s/%s/contents' % (str_dataPath, 'head')))
             return astr_page
 
+        def body_titleAssemble(astr_page):
+            """
+            DESC
+                Assemble the title portion of the page
+
+            INPUT
+                astr_page       current html code of page
+
+            RETURN
+                astr_page       updated html code of page
+            """
+            self.dp.qprint("Assembing title portion...", level = 2)
+
+            astr_page += self.data.cat('%s/title/contents' % str_dataPath)
+            astr_page += "\n"
+            return astr_page
+
+        def body_logosAssemble(astr_page):
+            """
+            DESC
+                Assemble the logos portion of the page
+
+            INPUT
+                astr_page       current html code of page
+
+            RETURN
+                astr_page       updated html code of page
+            """
+            if not self.b_noLogos:
+                self.dp.qprint("Assembing logos portion...", level = 2)
+
+                astr_page += self.data.cat('%s/logos/contents' % str_dataPath)
+                astr_page += "\n"
+            return astr_page
+
+        def body_navBarAssemble(astr_page):
+            """
+            DESC
+                Assemble the navBar portion of the page
+
+            INPUT
+                astr_page       current html code of page
+
+            RETURN
+                astr_page       updated html code of page
+            """
+            self.dp.qprint("Assembing nav bar...", level = 2)
+            astr_page += '''\n<body>
+
+    <div class="metaData" id="numberOfSlides">%s</div>
+    <div class="metaData" id="slideIDprefix">%s</div>
+
+            ''' % (
+                numberOfSlides_find(),
+                self.str_slidePrefixDOMID
+            )
+
+            astr_page += self.data.cat('%s/navbar/contents' % str_dataPath)
+            astr_page += "\n"
+            return astr_page
+
         def body_navAndLogosAssemble(astr_page):
             """
             DESC
@@ -681,7 +747,8 @@ class tsmake(object):
 
             astr_page += self.data.cat('%s/navbar/contents' % str_dataPath)
             astr_page += "\n"
-            astr_page += self.data.cat('%s/logos/contents'  % str_dataPath)
+            if not self.b_noLogos:
+                astr_page += self.data.cat('%s/logos/contents'  % str_dataPath)
             astr_page += "\n"
             return astr_page
 
@@ -851,29 +918,8 @@ class tsmake(object):
                                                         str_slideStyle,
                                                         str_slideClass)''' % slideStyle)
 
-                # str_slideText   = slideText_process(slide['body'], slideCount)
-                # if 'body-style' in slide:
-                #     str_slideStyle = 'style="display:none; %s"' % slide['body-style']
-                # if 'body-class' in slide:
-                #     str_slideClass += slide['body-class']
-                #     if 'noisy' in str_slideClass:
-                #         str_slideBottom +='''
-                #                     </div>
-                #                     <div class="piece scanlines noclick"></div>
-                #                     <div class="piece glow noclick"></div>
-                #                     </div>
-                #         '''
                 self.dp.qprint("\tslide %d:\n%s" % (slideCount, str_slide), 
                                 level = 4)
-#                 astr_page += '''
-#         <div class="%s" id="%s" name="%s" %s>
-# <div class="frame">
-# <div class="piece output">
-# %s
-
-# %s
-#         </div>''' % (   str_slideClass, str_DOMID, str_DOMID, 
-#                         str_slideStyle, str_slideText, str_slideBottom)
                 slideCount += 1
                 astr_page  += str_slide
             astr_page += '\n        <div class="modal"><!-- Place at bottom of page --></div>\n'
@@ -903,8 +949,12 @@ class tsmake(object):
 
         str_pageHTML    = footer_assemble(
                             body_slidesAssemble(
-                                body_navAndLogosAssemble(
-                                    head_assemble(str_pageHTML)
+                                body_titleAssemble(
+                                    body_logosAssemble(
+                                        body_navBarAssemble(
+                                            head_assemble(str_pageHTML)
+                                        )
+                                    )
                                 )
                             )
                         )
@@ -1099,9 +1149,6 @@ class tsmake(object):
             'numSlides':        numSlides,
             'runTime':          other.toc()
         }
-
-        if self.b_json:
-            self.ret_dump(d_ret, **kwargs)
 
         self.dp.qprint('Returning from tslide run...', level = 1)
         return d_ret
