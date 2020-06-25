@@ -13,26 +13,26 @@ body {
   padding: 4em;
   color: rgba(255,255,255,.75);
   /* font-family: 'Anonymous Pro', monospace;   */
-  background-color: rgb(25,25,25);  
+  background-color: rgb(25,25,25);
 }
 
 .tty {
     color: rgba(255,255,255,.75);
     /* font-family: 'Anonymous Pro', monospace;   */
-    background-color: rgb(25,25,25);  
+    background-color: rgb(25,25,25);
 }
 
 .line-1{
     position: relative;
-    top: 50%;  
-    width: 24em;
+    top: 5%;
+    width: 50em;
     margin: 0 auto;
-    border-right: 2px solid rgba(255,255,255,.75);
+    /* border-right: 2px solid rgba(255,255,255,.75); */
     font-size: 180%;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
-    transform: translateY(-50%);    
+    transform: translateY(-50%);
 }
 
 /* Animation */
@@ -42,14 +42,51 @@ body {
 }
 @keyframes typewriter{
   from{width: 0;}
-  to{width: 24em;}
+  to{width: 50em;}
 }
 @keyframes blinkTextCursor{
   from{border-right-color: rgba(255,255,255,.75);}
   to{border-right-color: transparent;}
 }
 
-/* 
+/*
+    from https://https://www.codesdope.com/blog/article/12-creative-css-and-javascript-text-typing-animati/#:~:text=Multiline%20Typewriter%20Effect,if%20they%20are%20being%20typed.
+ */
+
+.var-highlight{
+    color: #C0AD60;
+}
+.string-highlight{
+    color: rgba(253, 149, 90, 0.8);
+}
+
+.typing{
+        font-size: 2em;
+        margin: 0;
+        font-family: "Courier New";
+
+        &:after{
+            content: "|";
+            animation: blink 500ms linear infinite alternate;
+        }
+}
+
+@-webkit-keyframes blink{
+    0%{opacity: 0;}
+    100%{opacity: 1;}
+}
+
+@-moz-keyframes blink{
+    0%{opacity: 0;}
+    100%{opacity: 1;}
+}
+
+@keyframes blink{
+    0%{opacity: 0;}
+    100%{opacity: 1;}
+}
+
+/*
     from https://css-tricks.com/snippets/css/typewriter-effect/
  */
 
@@ -59,17 +96,17 @@ body {
     white-space: nowrap; /* Keeps the content on a single line */
     margin: 0 auto; /* Gives that scrolling effect as the typing happens */
     letter-spacing: .15em; /* Adjust as needed */
-    animation: 
+    animation:
       typing 3.5s steps(40, end),
       blink-caret .75s step-end infinite;
 }
-  
+
 /* The typing effect */
 @keyframes typing {
     from { width: 0 }
     to { width: 100% }
 }
-  
+
 /* The typewriter cursor effect */
 @keyframes blink-caret {
     from, to { border-color: transparent }
@@ -85,7 +122,7 @@ body {
     width: 100%;
     background-color: grey;
   }
-  
+
 #slideBar {
     width: 1%;
     height: 5px;
@@ -97,7 +134,7 @@ body {
     animation:blinkingText 1.2s infinite;
 }
 @keyframes blinkingText{
-    0%{     color:  #000;         }
+    0%{     color: #000;          }
     49%{    color: #000;          }
     60%{    color: transparent;     }
     99%{    color: transparent;     }
@@ -107,7 +144,7 @@ body {
 .container {
     text-align: center;
   }
- 
+
  .container pre {
    display: inline-block;
    text-align: left;
@@ -119,7 +156,7 @@ dialog {
     border-radius: 0.6rem;
     box-shadow: 0 0 1em black;
 }
-  
+
 dialog::backdrop {
     background-color: rgba(0, 0, 0, 0.4);
 }
@@ -148,7 +185,7 @@ dialog[open] {
 .modal-footer {
     padding: 1em;
 }
-  
+
 .modal-header {
     margin: 0;
     padding-bottom: 0.6em;
@@ -157,7 +194,7 @@ dialog[open] {
     border-top-right-radius: 0.6rem;
     border-bottom: 1px solid hsl(211, 51%, 65%);
 }
-  
+
 .modal-footer {
     border-top: 1px solid hsl(211, 51%, 65%);
 }
@@ -167,7 +204,7 @@ td, th {
     padding: 0.5rem;
     text-align: center;
 }
-    
+
 .fa-icon-innter-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 1rem;
@@ -283,7 +320,7 @@ body.loading .modal {
     display: block;
 }
 
-    
+
 .button-xsmall {
     font-size: 70%;
 }
@@ -437,7 +474,7 @@ mark {
     90% { opacity: 0.72; }
     100% { opacity: 0.7; }
   }
-  
+
   ::selection {
     background: #0080FF;
     text-shadow: none !important;
@@ -479,7 +516,7 @@ mark {
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
   }
-  
+
   .dropping {
     /*background: -webkit-linear-gradient(
       bottom,
@@ -527,7 +564,7 @@ mark {
     -webkit-animation-duration: 30s;
     -webkit-animation-iteration-count: infinite;
   }
-  
+
   .flicker {
     -webkit-animation-name: flicker;
     -webkit-animation-duration: 1s;
@@ -572,7 +609,7 @@ mark {
     text-shadow: 0 0 5px #C8C8C8;
     /*overflow: hidden;
     white-space: nowrap;*/
-  
+
     /*box-shadow: 10px 5px 20px rgba(255,255,255,0.2) inset,
                 -10px -5px 20px rgba(255,255,255,0.2) inset;
     border-radius: 50px;
@@ -757,8 +794,8 @@ mark {
     -webkit-columns: 2;
     columns: 2;
   }
-  
-  
+
+
   /* Themes */
   .cream {
     color: black;
@@ -773,5 +810,4 @@ mark {
   .cream .cmdline {
     color: black;
   }
-  
-  
+
