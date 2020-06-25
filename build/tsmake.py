@@ -17,7 +17,7 @@ import      fortune
 import      cowsay
 from        cowpy               import cow
 from        pyfiglet            import Figlet
-# cowsay.tux(f.renderText(fortune.get_random_fortune('./fortunes')))                                                                                                   
+# cowsay.tux(f.renderText(fortune.get_random_fortune('./fortunes')))
 
 # Project specific imports
 import      pfmisc
@@ -120,13 +120,13 @@ class D(S):
         self.dp.qprint(
             C_snode.str_blockIndent(str(S.T), 3, 8),
             level   = 1,
-            syslog  = False) 
+            syslog  = False)
 
 class SMarkDown(object):
     """
-        The directive for markdown is a markdown marker string, 
+        The directive for markdown is a markdown marker string,
         followed by a "function" string followed by optional
-        "args" for that function. The arguments are separated 
+        "args" for that function. The arguments are separated
         by commas. The remainder of the string line is taken to be
         the string to which apply the markdown.
 
@@ -143,17 +143,17 @@ class SMarkDown(object):
 
             _#_o_<N>,<HTMLStyle>,<tabPadding>
 
-            <N>             bullet ordering. Must be unique on a slide; 
+            <N>             bullet ordering. Must be unique on a slide;
                             multiple bullets with the same order <N> will
                             crash the browser.
 
-            <HTMLStyle>     a quoted string that will be added to each 
+            <HTMLStyle>     a quoted string that will be added to each
                             snippet line. The following macros are understood:
                             'l':    'style="float: left;"'
                             'r':    'style="float: right;"
 
             <tabPadding>    Optionally pre-pad the bullet with multiples of
-                            8 space chars.            
+                            8 space chars.
 
 
         _#_font_<figletFont> text : Render <text> with <figletFont>.
@@ -167,7 +167,7 @@ class SMarkDown(object):
         self.__name__           = 'SMarkDown'
         self.verbosityLevel     = 1
         self.mdMarker           = "_#_"
-        self.dp                         = pfmisc.debug(    
+        self.dp                         = pfmisc.debug(
                                             verbosity   = self.verbosityLevel,
                                             within      = self.__name__
                                             )
@@ -193,7 +193,7 @@ class SMarkDown(object):
 
                     b~<N>           bullet ordering, i.e.   b~01, b~02, ...
                                     Note that bullet ordering is the only
-                                    argument that does not require the 
+                                    argument that does not require the
                                     preceding "b~" -- see below.
                     f~<floatStyle>  HTML text for the float style
                                         f~l     == "float: left;"
@@ -206,7 +206,7 @@ class SMarkDown(object):
                                         z~150%  == "font size: 150%;"
 
                 Note that the ordering key~value is the only pairing where
-                only a value can be provided and they key is assumed to
+                only a value can be provided and the key is assumed to
                 be the bullet ordering. In other words, the following are
                 equivalent source specifications for a snippet order:
 
@@ -230,10 +230,10 @@ class SMarkDown(object):
                 if key == 'b':
                     d_ret['order']  = int(val)
                     continue
-                if key == 'f':  
+                if key == 'f':
                     str_style   += "float: " + "left;" if val == 'l' else "right;"
                     continue
-                if key == 't': 
+                if key == 't':
                     try:
                         (tab, width) = val.split('[')
                         tabWidth    = width
@@ -244,7 +244,7 @@ class SMarkDown(object):
                 if key == 'z':
                     str_style   += "font-size: %s" % val + ";"
             d_ret['style'] = 'style= "' + str_style + '"'
-            return d_ret 
+            return d_ret
 
 
         d_context       = args_parse(al_argList)
@@ -270,14 +270,14 @@ class SMarkDown(object):
             d_ret['result'] = astr_text
         except Exception as e:
             d_ret['error']  = str(e) + " font not found"
-            
+
         return d_ret
 
     def cowpy(self, al_argList, astr_text):
         """
             Place the <astr_text> in a "cowpy" bubble with an
-            optional character spec. Default character is 'tux'. 
-            
+            optional character spec. Default character is 'tux'.
+
         """
         d_ret   = {
             'status':   False,
@@ -298,7 +298,7 @@ class SMarkDown(object):
             d_ret['status'] = True
         except Exception as e:
             d_ret['error']  = str(e) + " character not found"
-            
+
         return d_ret
 
     def lineWidthBound(self, al_argList, astr_text):
@@ -318,7 +318,7 @@ class SMarkDown(object):
             d_ret['result'] = astr_text
         except Exception as e:
             d_ret['error']  = str(e) + " line limit failed"
-            
+
         return d_ret
 
     def markdown_process(self, astr_commandArg, astr_text):
@@ -358,7 +358,7 @@ class SMarkDown(object):
             'status':       False,
             'd_markdown':   {}
         }
-        # split astr_line into a list and find the element 
+        # split astr_line into a list and find the element
         # containing the this.mdMarker
         l_words     = astr_line.split()
         for str_word in l_words:
@@ -373,14 +373,14 @@ class SMarkDown(object):
     def run(self, astr_body):
         """
             Parse the <astr_body> for certain markdown
-            and replace with suitable HTML, which is 
+            and replace with suitable HTML, which is
             returned.
         """
         # Split the input <astr_body> into an array of lines
         l_lines     = astr_body.split("\n")
         l_newLines  = []
 
-        # find and process lines that contain the markdown marker   
+        # find and process lines that contain the markdown marker
         for str_line in l_lines:
             if self.mdMarker in str_line:
                 d_do        = self.markdown_do(str_line)
@@ -439,7 +439,7 @@ class tsmake(object):
         # Parse CLI args
         for key, value in kwargs.items():
             if key == 'inputDir':           self.str_inputDir           = value
-            if key == "outputDir":          outputDir_process(value) 
+            if key == "outputDir":          outputDir_process(value)
             if key == 'verbosity':          self.verbosityLevel         = int(value)
             if key == 'b_noLogos':          self.b_noLogos              = bool(value)
             if key == 'fortune':            self.fortuneSlides          = int(value)
@@ -455,7 +455,7 @@ class tsmake(object):
         self.str_extension                      = "hjson"
 
         #----------------- state --------------------
-        # There are some implicit assumptions in the 
+        # There are some implicit assumptions in the
         # underlying pfstate module that need to be
         # addressed in future versions of that module
         self.args['args']                       = {}
@@ -476,12 +476,12 @@ class tsmake(object):
         self.exitCode                           = 0
 
         # Convenience vars
-        self.dp                                 = pfmisc.debug(    
+        self.dp                                 = pfmisc.debug(
                                                     verbosity   = self.verbosityLevel,
                                                     within      = self.__name__
                                                     )
         self.log                                = pfmisc.Message()
-        self.log.syslog(True)       
+        self.log.syslog(True)
         self.tic_start                          = 0.0
         self.pp                                 = pprint.PrettyPrinter(indent=4)
 
@@ -504,9 +504,9 @@ class tsmake(object):
     def env_check(self, *args, **kwargs):
         """
         DESC
-            This method provides a common entry for any checks on the 
+            This method provides a common entry for any checks on the
             environment (input / output dirs, etc). Essentially, this
-            method checks the at the <self.str_outputDir> was specified 
+            method checks the at the <self.str_outputDir> was specified
             and that the <self.str_inputDir> exists.
 
         IMPLICIT INPUT
@@ -521,7 +521,7 @@ class tsmake(object):
         """
         b_status    = True
         str_error   = ''
-        if not len(self.str_outputDir): 
+        if not len(self.str_outputDir):
             b_status    = False
             str_error   = 'output directory not specified.'
             self.dp.qprint(str_error, comms = 'error')
@@ -542,8 +542,8 @@ class tsmake(object):
             Read html file snippets to use to assemble into
             final `index.html`.
 
-            The "map" to files is stored in the self.s state 
-            structure.            
+            The "map" to files is stored in the self.s state
+            structure.
 
         INPUT
             directory  = <str_directory>
@@ -598,7 +598,7 @@ class tsmake(object):
             if k == 'directory':        str_directory   = v
 
         self.lstr_slideFiles    = sorted(
-                                    glob.glob(str_directory + 
+                                    glob.glob(str_directory +
                                     '/' + self.str_slideListGlob)
                                 )
         if len(self.lstr_slideFiles):
@@ -610,7 +610,7 @@ class tsmake(object):
             'status':           b_status,
             'numSlides':        len(self.lstr_slideFiles)
         }
-        
+
     def htmlPage_assemble(self):
         """
         DESC
@@ -657,7 +657,7 @@ class tsmake(object):
             """
             self.dp.qprint("Assembing head...", level = 2)
             astr_page   ='''%s%s<html>\n%s
-            ''' % ( astr_page, 
+            ''' % ( astr_page,
                     self.data.cat('%s/%s/contents' % (str_dataPath, 'doctype')),
                     self.data.cat('%s/%s/contents' % (str_dataPath, 'head')))
             return astr_page
@@ -758,7 +758,7 @@ class tsmake(object):
                 Perform some optional processing on slide text.
 
                 First, parse and process any "markdown", then remove
-                any ''' chars in the text and optionally pad to a 
+                any ''' chars in the text and optionally pad to a
                 fixed number of rows.
 
                 In addition, any 'order-X' ids are replaced with
@@ -793,7 +793,14 @@ class tsmake(object):
 
             astr_slideText  = self.markdown.run(astr_slideText)
             astr_slideText  = astr_slideText.replace("'''", '')
-            astr_slideText  = astr_slideText.replace('order', 'order-%d' % a_slideCount)            
+            astr_slideText  = astr_slideText.replace(
+                                    'order', 
+                                    'order-%d' % a_slideCount
+                                )
+            astr_slideText  = astr_slideText.replace(
+                                    'typewriter', 
+                                    'typewriter-%d' % a_slideCount
+                                )
             astr_slideText  = rows_addToBottom(astr_slideText)
             return astr_slideText
 
@@ -818,13 +825,13 @@ class tsmake(object):
                 <div id="%s-title" style="display: none;">
                     %s
                 </div> <!--- title div --->\n''' % ( str_DOMID,
-                                str_DOMID, 
+                                str_DOMID,
                                 slide['title'])
                 return str_title
 
             def slideStyle_determine(hjsonslide):
                 """
-                Simply determine the style to apply, based on 
+                Simply determine the style to apply, based on
                 parsing the hjson slide.
 
                 RETURN:
@@ -840,7 +847,7 @@ class tsmake(object):
                         return 'oldStyleTerminal'
                 return 'default'
 
-            def default_styleApply( hjsonslide, 
+            def default_styleApply( hjsonslide,
                                     slideCount,
                                     str_slideStyle,
                                     str_slideClass):
@@ -861,12 +868,12 @@ class tsmake(object):
 %s
                 </div> <!--- slide div --->
                 <!--------------------------- slide-%d end ----------------------->
-         
-        ''' % (     str_slideClass, str_DOMID, str_DOMID, str_slideStyle, 
+
+        ''' % (     str_slideClass, str_DOMID, str_DOMID, str_slideStyle,
                     str_slideText, slideCount)
                 return str_slideDiv
 
-            def oldStyleTerminal_styleApply(hjsonslide, 
+            def oldStyleTerminal_styleApply(hjsonslide,
                                             slideCount,
                                             str_slideStyle,
                                             str_slideClass):
@@ -895,8 +902,8 @@ class tsmake(object):
 
 
                 <!--------------------------- end --------------------------->
-         
-        ''' % (     str_slideClass, str_DOMID, str_DOMID, str_slideStyle, 
+
+        ''' % (     str_slideClass, str_DOMID, str_DOMID, str_slideStyle,
                     str_slideText)
                 return str_slideDiv
 
@@ -913,12 +920,12 @@ class tsmake(object):
 
                 str_slide      += title_make(slide, str_DOMID)
                 slideStyle      = slideStyle_determine(slide)
-                str_slide      += eval('''%s_styleApply(slide, 
+                str_slide      += eval('''%s_styleApply(slide,
                                                         slideCount,
                                                         str_slideStyle,
                                                         str_slideClass)''' % slideStyle)
 
-                self.dp.qprint("\tslide %d:\n%s" % (slideCount, str_slide), 
+                self.dp.qprint("\tslide %d:\n%s" % (slideCount, str_slide),
                                 level = 4)
                 slideCount += 1
                 astr_page  += str_slide
@@ -962,7 +969,7 @@ class tsmake(object):
             'status':       b_status,
             'pageHTML':     str_pageHTML
         }
-                
+
 
     def slidesFile_break(self):
         """
@@ -994,8 +1001,8 @@ class tsmake(object):
 
         if len(self.str_slidesFile):
             try:
-                fp              = open("%s/%s" % 
-                                        (self.str_inputDir, 
+                fp              = open("%s/%s" %
+                                        (self.str_inputDir,
                                          self.str_slidesFile), "r")
                 str_contents    = fp.read()
                 d_ret['status'] = True
@@ -1005,13 +1012,13 @@ class tsmake(object):
                 d_ret['msg']    = 'File %s/%s not accessible' % \
                                         (self.str_inputDir,
                                          self.str_slidesFile)
-            
+
             if d_ret['status']:
                 d_ret['slideFileList']   = str_contents.split(self.str_slidesFileBreak)
                 slideCount      = 0
                 for slide in d_ret['slideFileList']:
                     slideCount += 1
-                    with open('%s/%s%03d.hjson' % (self.str_inputDir, 
+                    with open('%s/%s%03d.hjson' % (self.str_inputDir,
                                                 self.str_slidePrefixDOMID,
                                                 slideCount), 'w') as fp:
                         fp.write(slide)
@@ -1022,15 +1029,15 @@ class tsmake(object):
     def filelist_prune(self, at_data, *args, **kwargs):
         """
         DESC
-            Given a list of files, possibly prune list by 
+            Given a list of files, possibly prune list by
             extension.
 
         NOTE:
-            This is a historical method and not currently 
+            This is a historical method and not currently
             used! It is conserved for now in case a `pfree`
             directory walk is used in future.
 
-            The somewhat cumbersome calling signature is 
+            The somewhat cumbersome calling signature is
             due to `pfree` callback requirements.
         """
 
@@ -1046,7 +1053,7 @@ class tsmake(object):
             l_file      = al_file
             b_status    = True
         else:
-            self.dp.qprint( "No valid files to analyze found in path %s!" % str_path, 
+            self.dp.qprint( "No valid files to analyze found in path %s!" % str_path,
                             comms = 'error', level = 3)
             l_file      = None
             b_status    = False
@@ -1066,8 +1073,8 @@ class tsmake(object):
             if k == 'JSONprint':    b_print     = bool(v)
         if b_print:
             print(
-                json.dumps(   
-                    d_ret, 
+                json.dumps(
+                    d_ret,
                     indent      = 4,
                     sort_keys   = True
                 )
@@ -1076,7 +1083,7 @@ class tsmake(object):
     def run(self, *args, **kwargs):
         """
         DESC
-            The run method is the main entry point to the operational 
+            The run method is the main entry point to the operational
             behaviour of the script.
 
         INPUT
@@ -1099,7 +1106,7 @@ class tsmake(object):
         numSlides           = 0
 
         self.dp.qprint(
-                "Starting tsmake run... ", 
+                "Starting tsmake run... ",
                 level = 1
                 )
 
@@ -1135,8 +1142,8 @@ class tsmake(object):
                     l_supportDirs   = ['css', 'fortunes', 'images', 'js', 'logos']
                     for str_dir in l_supportDirs:
                         self.dp.qprint("Copying dir %s..." % str_dir, level = 2)
-                        copy_tree('./%s' % str_dir, '%s/%s' % 
-                                                (self.str_outputDir, 
+                        copy_tree('./%s' % str_dir, '%s/%s' %
+                                                (self.str_outputDir,
                                                 str_dir))
 
         d_ret = {
@@ -1152,4 +1159,3 @@ class tsmake(object):
 
         self.dp.qprint('Returning from tslide run...', level = 1)
         return d_ret
-        
