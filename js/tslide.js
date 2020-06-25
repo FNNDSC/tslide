@@ -1,6 +1,6 @@
 /////////
 ///////////////////////////
-///////// Object prototypes 
+///////// Object prototypes
 ///////////////////////////
 /////////
 
@@ -65,17 +65,17 @@ Debug.prototype = {
         functionCallDepth += 1;
         this.tab = functionCallDepth;
         console.log(
-            this.indent()           + 
-            '--------> Entering '   + 
-            this.functionName       + 
+            this.indent()           +
+            '--------> Entering '   +
+            this.functionName       +
             '...');
     },
 
     leaving:        function () {
         console.log(
-            this.indent()       + 
-            'Leaving '          + 
-            this.functionName   + 
+            this.indent()       +
+            'Leaving '          +
+            this.functionName   +
             ' --------> ');
         functionCallDepth -= 1;
     },
@@ -84,22 +84,22 @@ Debug.prototype = {
         this.argcheck(d);
         if (typeof (this.var) === 'object') {
             console.log(
-                this.indent()               + 
-                'In ' + this.functionName   + 
+                this.indent()               +
+                'In ' + this.functionName   +
                 ': ' + d.message + ' = '
             );
             console.log(d.var);
         } else
             console.log(
-                this.indent()               + 
-                'In ' + this.functionName   + 
+                this.indent()               +
+                'In ' + this.functionName   +
                 ': ' + d.message    + ' = ' + d.var);
     },
 
     log:            function (d) {
         this.argcheck(d);
         console.log(
-                this.indent()               + 
+                this.indent()               +
                 'In ' + this.functionName + ': ' + d.message);
     }
 
@@ -113,10 +113,10 @@ function DOM(al_keylist) {
     this.str_help = `
 
         This object provides a convenient abstraction
-        for accessing and interacting with named components 
-        of the DOM, removing the very tight coupling that 
+        for accessing and interacting with named components
+        of the DOM, removing the very tight coupling that
         might occur by referening DOM literals directly in JS.
-    
+
     `;
     this.l_DOM = al_keylist;
 }
@@ -190,7 +190,7 @@ DOM.prototype = {
 function URL(dom) {
     this.str_help   = `
 
-        This object parses the URL for parameters to set in the 
+        This object parses the URL for parameters to set in the
         dashboard.
 
     `;
@@ -212,7 +212,7 @@ URL.prototype = {
 }
 
 /////////
-///////// An initial markdown-ish object that understands some 
+///////// An initial markdown-ish object that understands some
 ///////// markdown in a string of text and converts to HTML
 /////////
 function SMarkDown() {
@@ -224,9 +224,9 @@ function SMarkDown() {
         DOM objects that can interact with these elements are also
         instantiated.
 
-        The directive for markdown is a markdown marker string, 
+        The directive for markdown is a markdown marker string,
         followed by a "function" string followed by optional
-        "args" for that function. The arguments are separated 
+        "args" for that function. The arguments are separated
         by commas. The remainder of the string line is taken to be
         the string to which apply the markdown.
 
@@ -257,7 +257,7 @@ SMarkDown.prototype = {
         let str_help = `
 
             Replace the <astr_text> with the relevant snippet equivalent.
-        
+
         `;
 
         str_order   = al_argList[0];
@@ -279,7 +279,7 @@ SMarkDown.prototype = {
 
             Replace the <astr_text> with a figlet font of the same.
             If invalid font, then return the astr_text unchanged.
-        
+
         `;
         str_font    = al_argList[0];
 
@@ -289,7 +289,7 @@ SMarkDown.prototype = {
         let str_help = `
 
             Perform the actual markdown execution.
-        
+
         `;
         d_ret = {
             'status':   false,
@@ -300,7 +300,7 @@ SMarkDown.prototype = {
         str_command         = l_markdownComArg[0];
         l_argList           = l_markdownComArg[1].split(',')
         switch(str_command) {
-            case 'o':   
+            case 'o':
                 d_ret['status'] = true;
                 d_ret['result'] = this.snippetMake(l_argList, astr_text);
                 break;
@@ -318,10 +318,10 @@ SMarkDown.prototype = {
 
             Process the markdown directive in the <astr_line> and
             branch to appropriate handler.
-        
+
         `;
 
-        // split astr_line into a list and find the element 
+        // split astr_line into a list and find the element
         // containing the this.mdMarker
         let l_words     = astr_line.split(/(\s+)/);
         for(let str_word of l_words) {
@@ -338,9 +338,9 @@ SMarkDown.prototype = {
         let str_help = `
 
             Parse the <astr_text> for certain markdown
-            and replace with suitable HTML, which is 
+            and replace with suitable HTML, which is
             returned.
-        
+
         `;
 
         // Split the input string into an array
@@ -357,9 +357,79 @@ SMarkDown.prototype = {
 
 }
 
+/////////
+///////// A typewriter effect object
+///////// from https://codepen.io/stevn/pen/jEZvXa
+/////////
+
+function setupTypewriter(t) {
+    var HTML = t.innerHTML;
+
+    t.innerHTML = "";
+
+    var cursorPosition  = 0,
+        tag             = "",
+        writingTag      = false,
+        tagOpen         = false,
+        typeSpeed       = 100,
+    tempTypeSpeed = 0;
+
+    var type = function() {
+
+        if (writingTag === true) {
+            tag += HTML[cursorPosition];
+        }
+
+        if (HTML[cursorPosition] === "<") {
+            tempTypeSpeed = 0;
+            if (tagOpen) {
+                tagOpen = false;
+                writingTag = true;
+            } else {
+                tag = "";
+                tagOpen = true;
+                writingTag = true;
+                tag += HTML[cursorPosition];
+            }
+        }
+        if (!writingTag && tagOpen) {
+            tag.innerHTML += HTML[cursorPosition];
+        }
+        if (!writingTag && !tagOpen) {
+            if (HTML[cursorPosition] === " ") {
+                tempTypeSpeed = 0;
+            }
+            else {
+                tempTypeSpeed = (Math.random() * typeSpeed) + 50;
+            }
+            t.innerHTML += HTML[cursorPosition];
+        }
+        if (writingTag === true && HTML[cursorPosition] === ">") {
+            tempTypeSpeed = (Math.random() * typeSpeed) + 50;
+            writingTag = false;
+            if (tagOpen) {
+                var newSpan = document.createElement("span");
+                t.appendChild(newSpan);
+                newSpan.innerHTML = tag;
+                tag = newSpan.firstChild;
+            }
+        }
+
+        cursorPosition += 1;
+        if (cursorPosition < HTML.length - 1) {
+            setTimeout(type, tempTypeSpeed);
+        }
+
+    };
+
+    return {
+        type: type
+    };
+}
+
 
 /////////
-///////// A Page object that describes the HTML version elements from a 
+///////// A Page object that describes the HTML version elements from a
 ///////// logical perspective.
 /////////
 
@@ -371,7 +441,7 @@ function Page() {
         The page element strings are "defined" here, and various
         DOM objects that can interact with these elements are also
         instantiated.
-        
+
     `;
 
     this.currentSlide               = 1;
@@ -379,8 +449,8 @@ function Page() {
 
 
     // Keys parsed from the URL
-    this.l_urlParamsBasic = [   
-        "slide", 
+    this.l_urlParamsBasic = [
+        "slide",
     ];
 
     // DOM keys related to the slides
@@ -391,7 +461,7 @@ function Page() {
     this.init();
 
     // DOM obj elements --  Each object has a specific list of page key
-    //                      elemnts that it process to provide page
+    //                      elements that it process to provide page
     //                      access functionality
     this.DOMurl         = new DOM(this.l_urlParams);
     this.DOMslide       = new DOM(this.l_slide);
@@ -433,8 +503,8 @@ Page.prototype = {
 
     retreat_overSnippets:               function() {
         let str_help = `
-            For a given slide, this retreats over the snippets, turning 
-            each current snippet OFF. 
+            For a given slide, this retreats over the snippets, turning
+            each current snippet OFF.
 
             Return:
             true:       All snippets have been toggled to display: none
@@ -447,13 +517,13 @@ Page.prototype = {
 
         let snippetToDisplayOFF         = this.l_snippetPerSlideON[thisSlide];
         let DOMsnippet                  = document.getElementById(
-                                            'order-' + this.currentSlide + 
+                                            'order-' + this.currentSlide +
                                             '-' + snippetToDisplayOFF
                                             );
         DOMsnippet.style.display        = 'none';
         this.l_snippetPerSlideON[thisSlide] -= 1;
         return false;
-        
+
     },
 
     advance_overSnippets:               function() {
@@ -467,8 +537,8 @@ Page.prototype = {
         `;
         let thisSlide   = this.currentSlide-1
         // Check if all snippets are ON, and if so, return with a true
-        if(this.l_snippetPerSlideON[thisSlide] == 
-            this.l_snippetsPerSlide[thisSlide]) 
+        if(this.l_snippetPerSlideON[thisSlide] ==
+            this.l_snippetsPerSlide[thisSlide])
             return true;
 
         let snippetToDisplay            = this.l_snippetPerSlideON[thisSlide] + 1;
@@ -476,7 +546,7 @@ Page.prototype = {
                                                 'order-' + this.currentSlide +
                                                 '-' + snippetToDisplay
                                             );
-        DOMsnippet.style.display    = 'block';
+        DOMsnippet.style.display        = 'block';
         this.l_snippetPerSlideON[thisSlide]    += 1;
         return false;
     },
@@ -526,7 +596,7 @@ Page.prototype = {
         let index_followingSlide    = index_currentSlide+1;
         if(index_followingSlide > this.l_slide.length) {
             index_followingSlide    = 1;
-        } 
+        }
         this.currentSlide           = index_followingSlide;
         this.slide_transition(index_currentSlide, index_followingSlide);
     },
@@ -539,18 +609,31 @@ Page.prototype = {
         let index_followingSlide    = index_currentSlide-1;
         if(index_followingSlide < 1) {
             index_followingSlide    = this.l_slide.length;
-        } 
+        }
         this.currentSlide           = index_followingSlide;
         this.slide_transition(index_currentSlide, index_followingSlide);
     },
 
-    slide_transition:                   function(index_currentSlide, 
+    slide_typewriterEffectProcess:      function(index_slide) {
+        let str_help = `
+            Run the typewriter effect on tags, in order, that
+            might be displayed.
+        `;
+
+        var typer = document.getElementById('typewriter-' + index_slide);
+        if(typer) {
+            typewriter = setupTypewriter(typer);
+            typewriter.type();
+        }
+    },
+
+    slide_transition:                   function(index_currentSlide,
                                                  index_followingSlide) {
         let str_help = `
-            Do the actual transition from one slide to another, 
+            Do the actual transition from one slide to another,
             as well as update the running slide counter in the footer.
 
-            Also, on the next slide, all 'snippets' are set to 'none'.
+            Also, on the next slide, process any typewriter effects.
         `;
 
         let DOMID_currentSlide      = document.getElementById(
@@ -560,7 +643,7 @@ Page.prototype = {
                                             this.str_slideIDprefix + index_followingSlide
                                         );
         let DOMID_slideTitle        = document.getElementById(
-                                            this.str_slideIDprefix + index_followingSlide + 
+                                            this.str_slideIDprefix + index_followingSlide +
                                             '-title');
         let DOMID_slideCounter      = document.getElementById('slideCounter');
         let DOMID_pageTitle         = document.getElementById('pageTitle');
@@ -568,29 +651,30 @@ Page.prototype = {
 
         DOMID_currentSlide.style.display    = "none";
         DOMID_followingSlide.style.display  = "block";
+        this.slide_typewriterEffectProcess(index_followingSlide);
         // this.allSnippets_displaySet('none', index_followingSlide);
         if(DOMID_slideTitle !== null) {
             DOMID_pageTitle.innerHTML = DOMID_slideTitle.innerHTML;
-        } else { 
+        } else {
             DOMID_pageTitle.innerHTML = " ";
         }
         DOMID_slideCounter.innerHTML = "slide "                 +
-                                        this.currentSlide       + 
+                                        this.currentSlide       +
                                         " / " + this.l_slide.length;
         progress = this.currentSlide / this.l_slide.length * 100;
         DOMID_slideBar.style.width = progress + "%";
     },
 
     // Page
-    FAinputButton_create:               function(astr_functionClickName, 
-                                                 astr_value, 
-                                                 astr_fname, 
+    FAinputButton_create:               function(astr_functionClickName,
+                                                 astr_value,
+                                                 astr_fname,
                                                  astr_baseSet = "fa") {
         let str_inputButton     = `<input type="button"   onclick="` + astr_functionClickName + `"
-                                    value=" &#x` + astr_value + ` " 
-                                    style="padding: .1em .4em;" 
-                                    class=" pure-button 
-                                            pure-button-primary 
+                                    value=" &#x` + astr_value + ` "
+                                    style="padding: .1em .4em;"
+                                    class=" pure-button
+                                            pure-button-primary
                                             ` + astr_baseSet + ` ` + astr_baseSet + '-' + astr_fname + `">
                                   `;
         return(str_inputButton);
@@ -598,7 +682,7 @@ Page.prototype = {
 
     // Page
     rightArrow_inputButtonCreate:       function() {
-        return(this.FAinputButton_create("page.rightArrow_process()", 
+        return(this.FAinputButton_create("page.rightArrow_process()",
                                          "f35a", "arrow-alt-circle-right"));
     },
 
@@ -644,7 +728,7 @@ Page.prototype = {
     upArrow_process:                    function() {
         let str_help = `
 
-            Process an up arrow event -- 
+            Process an up arrow event --
 
             Call the first slide.
 
@@ -676,8 +760,8 @@ Page.prototype = {
         let str_help = `
 
             The 'this' seems confused at this point. My guess is that
-            since the event is defined on the "document" the 'this' 
-            retains that identify when executing here. 
+            since the event is defined on the "document" the 'this'
+            retains that identify when executing here.
 
             Hence, we call the 'page' variable explicitly when resolving
             scope.
@@ -708,7 +792,7 @@ Page.prototype = {
         }
     },
 
-    
+
     // Page
     fields_populateFromURL: function() {
         let str_help = `
@@ -726,10 +810,11 @@ let page            = new Page();
 
 
 // The whole document
-$body                       = $("body");
+$body               = $("body");
 
 window.onload = function() {
     // Start on the first slide
     page.advance_toFirst();
 };
+
 
