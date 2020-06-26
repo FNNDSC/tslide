@@ -468,6 +468,9 @@ function Page() {
     // object that parses the URL
     this.url            = new URL(this.DOMurl);
 
+    // an object for housing typewriter functions
+    this.d_typerDOM     = {};
+    this.d_typewriter   = {};
 }
 
 Page.prototype = {
@@ -499,6 +502,75 @@ Page.prototype = {
             this.l_snippetsPerSlide.push(snippetsPerSlide);
             this.l_snippetPerSlideON.push(0);
         }
+    },
+
+    setupTypewriter:                    function(t) {
+        let str_help = `
+            ///////// A typewriter effect object
+            ///////// from https://codepen.io/stevn/pen/jEZvXa
+
+        `;
+        var HTML            = t.innerHTML;
+        t.innerHTML         = "";
+
+        var cursorPosition  = 0,
+            tag             = "",
+            writingTag      = false,
+            tagOpen         = false,
+            typeSpeed       = 10,
+            tempTypeSpeed   = 0;
+
+        var type = function() {
+
+            if (writingTag === true) {
+                tag += HTML[cursorPosition];
+            }
+
+            if (HTML[cursorPosition] === "<") {
+                tempTypeSpeed = 0;
+                if (tagOpen) {
+                    tagOpen = false;
+                    writingTag = true;
+                } else {
+                    tag = "";
+                    tagOpen = true;
+                    writingTag = true;
+                    tag += HTML[cursorPosition];
+                }
+            }
+            if (!writingTag && tagOpen) {
+                tag.innerHTML += HTML[cursorPosition];
+            }
+            if (!writingTag && !tagOpen) {
+                if (HTML[cursorPosition] === " ") {
+                    tempTypeSpeed = 0;
+                }
+                else {
+                    tempTypeSpeed = (Math.random() * typeSpeed) + 50;
+                }
+                t.innerHTML += HTML[cursorPosition];
+            }
+            if (writingTag === true && HTML[cursorPosition] === ">") {
+                tempTypeSpeed = (Math.random() * typeSpeed) + 50;
+                writingTag = false;
+                if (tagOpen) {
+                    var newSpan = document.createElement("span");
+                    t.appendChild(newSpan);
+                    newSpan.innerHTML = tag;
+                    tag = newSpan.firstChild;
+                }
+            }
+
+            cursorPosition += 1;
+            if (cursorPosition < HTML.length - 1) {
+                setTimeout(type, tempTypeSpeed);
+            }
+
+        };
+
+        return {
+            type: type
+        };
     },
 
     retreat_overSnippets:               function() {
@@ -620,10 +692,14 @@ Page.prototype = {
             might be displayed.
         `;
 
-        var typer = document.getElementById('typewriter-' + index_slide);
+        let str_idRef   = 'typewriter-' + index_slide;
+        let typer       = document.getElementById(str_idRef);
         if(typer) {
-            typewriter = setupTypewriter(typer);
-            typewriter.type();
+            this.d_typerDOM[str_idRef]      = typer;
+            this.d_typewriter[str_idRef]    = this.setupTypewriter(
+                                                    this.d_typerDOM[str_idRef]
+                                                );
+            this.d_typewriter[str_idRef].type();
         }
     },
 
