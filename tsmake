@@ -37,12 +37,12 @@ str_name    = tsmake
 str_version = "0.99"
 str_desc    = Colors.CYAN + """
  _                           _
-| |                         | |         
-| |_  ___  _ __ ___    __ _ | | __  ___ 
-| __|/ __|| '_ ` _ \  / _` || |/ / / _ \ 
+| |                         | |
+| |_  ___  _ __ ___    __ _ | | __  ___
+| __|/ __|| '_ ` _ \  / _` || |/ / / _ \
 | |_ \__ \| | | | | || (_| ||   < |  __/
  \__||___/|_| |_| |_| \__,_||_|\_\ \___|
-                                        
+
 
 
 
@@ -57,10 +57,10 @@ str_desc    = Colors.CYAN + """
 
     The `tslide` system is designed to provide a quick-n-dirty mechanism
     for building an html slide show around a series of essentially text-
-    formatted and decorated individual files. The slide order is indentical 
+    formatted and decorated individual files. The slide order is indentical
     to the ls-order of the underlying individual slide files.
 
-    Creating slides is as simple as saving a set of JSON text files of 
+    Creating slides is as simple as saving a set of JSON text files of
     format:
 """ + Colors.NO_COLOUR + """
 
@@ -78,7 +78,7 @@ str_desc    = Colors.CYAN + """
 
 """ + Colors.GREEN + """
     Note also that a single text file can be processed and split into
-    consituent slide files, greatly simplifying the workflow of 
+    consituent slide files, greatly simplifying the workflow of
     creating html slide shows from existing text.
 
 """
@@ -97,6 +97,7 @@ def synopsis(ab_shortOnly = False):
             %s                                                    \\
                 --inputDir <inputDir>                               \\
                 --outputDir <outputDir>                             \\
+                [--additionalDirList <dir1,dir2,...,dirN>]          \\
                 [--slideTextNumRows <numRows>]                      \\
                 [--slideListGlob <slidesListGlob>]                  \\
                 [--slidePrefixDOMID <slidePrefixDOMID>]             \\
@@ -105,7 +106,7 @@ def synopsis(ab_shortOnly = False):
                 [--json]                                            \\
                 [-x|--desc]                                         \\
                 [-y|--synopsis]
-            
+
     BRIEF EXAMPLE
 
             # Assume a dir './slideShow` exists and contains files of
@@ -114,7 +115,7 @@ def synopsis(ab_shortOnly = False):
                     --inputDir slides-example                       \\
                     --slideListGlob "slide-*"                       \\
                     --slideTextNumRows=30                           \\
-                    --verbosity 0          
+                    --verbosity 0
 
     '''  % (scriptName, scriptName)
 
@@ -127,15 +128,15 @@ def synopsis(ab_shortOnly = False):
 
         Resultant `index.html` and related css, js, and image files/dirs
         are all deposited in an <outputDir>. Running a simple web server
-        rooted in that directory is typcially no more difficult that 
+        rooted in that directory is typcially no more difficult that
 
             cd <outputDir>
             python3 -m http.server
-        
+
         In this manner, by having <outputDir> be outside of the source
-        code repo directory, any changes to css/js etc in the resultant 
+        code repo directory, any changes to css/js etc in the resultant
         <outputDir> do not contaminate the base repository.
-                        
+
     ARGS
 
         --inputDir <inputDir>
@@ -143,8 +144,14 @@ def synopsis(ab_shortOnly = False):
         to assemble into slide show.
 
         --outputDir <outputDir>
-        An output directory that will contain the resultant web-based 
+        An output directory that will contain the resultant web-based
         files suitable for completely running the created slide show.
+
+        [--additionalDirList <dir1,dir2,...,dirN>]
+        An optional comma separated list of additional directories to
+        copy to the $OUTPUTDIR. This allows for better separation of
+        slide-show specific data (such as images etc) from the core
+        `tslide` repo.
 
         [--slidesFile <slidesFile>]
         A input text file to split into several constituent individual
@@ -173,7 +180,7 @@ def synopsis(ab_shortOnly = False):
         [--json]
         If specified, print JSON return payload from call to run method.
 
-        [-x|--desc]                                     
+        [-x|--desc]
         Provide an overview help page.
 
         [-y|--synopsis]
@@ -183,7 +190,7 @@ def synopsis(ab_shortOnly = False):
         Print internal version number and exit.
 
         [-v|--verbosity <level>]
-        Set the verbosity level. "0" typically means no/minimal output. 
+        Set the verbosity level. "0" typically means no/minimal output.
         Levels:
 
             0:  no output
@@ -202,9 +209,9 @@ def synopsis(ab_shortOnly = False):
             --inputDir slides-example                           \\
             --slideListGlob "slide-*"                           \\
             --slideTextNumRows=30                               \\
-            --verbosity 0          
+            --verbosity 0
 
-        # Create a series of "fake" slides first, and then 
+        # Create a series of "fake" slides first, and then
         # build a slow show.
 
         %s                                                    \\
@@ -248,6 +255,13 @@ parser.add_argument(
     '--outputDir',
     help    = 'directory in which to build web slide show.',
     dest    = 'outputDir',
+    default = ""
+)
+
+parser.add_argument(
+    '--additionalDirList',
+    help    = 'comma separated list of additional dirs to copy to OUTPUTDIR.',
+    dest    = 'additionalDirList',
     default = ""
 )
 
@@ -324,7 +338,7 @@ parser.add_argument(
     dest    = 'synopsis',
     action  = 'store_true',
     default = False
-) 
+)
 
 args                = parser.parse_args()
 
@@ -347,7 +361,7 @@ if args.b_version:
     sys.exit(1)
 
 TSmake  = tsmake(**d_args)
-d_run   = TSmake.run(timerStart = True) 
+d_run   = TSmake.run(timerStart = True)
 if args.b_json:
     print(
         json.dumps(
