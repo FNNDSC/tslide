@@ -435,6 +435,7 @@ class tsmake(object):
 
         # Init some vars
         self.b_noLogos                          = False
+        self.str_additionalDirList              = ""
 
         # Parse CLI args
         for key, value in kwargs.items():
@@ -448,6 +449,7 @@ class tsmake(object):
             if key == 'slideTextNumRows':   self.textNumRows            = int(value)
             if key == 'slidesFile':         self.str_slidesFile         = value
             if key == 'slidesFileBreak':    self.str_slidesFileBreak    = value
+            if key == 'additionalDirList':  self.str_additionalDirList  = value
 
         # Slide lists and dictionaries
         self.lstr_slideFiles                    = []
@@ -794,11 +796,11 @@ class tsmake(object):
             astr_slideText  = self.markdown.run(astr_slideText)
             astr_slideText  = astr_slideText.replace("'''", '')
             astr_slideText  = astr_slideText.replace(
-                                    'order', 
+                                    'order',
                                     'order-%d' % a_slideCount
                                 )
             astr_slideText  = astr_slideText.replace(
-                                    'typewriter', 
+                                    'typewriter',
                                     'typewriter-%d' % a_slideCount
                                 )
             astr_slideText  = rows_addToBottom(astr_slideText)
@@ -1139,12 +1141,22 @@ class tsmake(object):
                         fp.write(d_assemble['pageHTML'])
 
                     # and copy necessary dirs
-                    l_supportDirs   = ['css', 'fortunes', 'images', 'js', 'logos']
-                    for str_dir in l_supportDirs:
-                        self.dp.qprint("Copying dir %s..." % str_dir, level = 2)
-                        copy_tree('./%s' % str_dir, '%s/%s' %
+                    l_supportDirs   = ['./css', './fortunes', './images', './js', './logos']
+                    l_userDirs      = []
+                    if len(self.str_additionalDirList):
+                        l_userDirs  = self.str_additionalDirList.split(',')
+                    for str_dir in l_supportDirs + l_userDirs:
+                        self.dp.qprint("Copying dir %s... to %s/%s" % \
+                            (
+                                str_dir,
+                                self.str_outputDir,
+                                os.path.basename(str_dir)
+                            ),
+                            level = 2)
+                        copy_tree('%s' % str_dir, '%s/%s' %
                                                 (self.str_outputDir,
-                                                str_dir))
+                                                os.path.basename(str_dir)))
+
 
         d_ret = {
             'status':           b_status,
