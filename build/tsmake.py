@@ -713,8 +713,8 @@ class tsmake(object):
             self.dp.qprint("Assembing nav bar...", level = 2)
             astr_page += '''\n<body>
 
-    <div class="metaData" id="numberOfSlides">%s</div>
-    <div class="metaData" id="slideIDprefix">%s</div>
+    <div class="metaData" id="numberOfSlides" style="margin-bottom: -16px;">%s</div>
+    <div class="metaData" id="slideIDprefix"  style="margin-bottom: -16px;">%s</div>
 
             ''' % (
                 numberOfSlides_find(),
