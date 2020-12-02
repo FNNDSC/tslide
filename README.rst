@@ -29,7 +29,7 @@ tslide
 Installation
 ************
 
-Installation is relatively straightforward, and we recommend using python ```pip`` to simplu install the module, preferably in a python virtual environment.
+Installation is relatively straightforward, and we recommend using python ``pip`` to simply install the module, preferably in a python virtual environment.
 
 Python Virtual Environment
 ==========================
