@@ -14,18 +14,18 @@ def readme():
         return f.read()
 
 setup(
-      name             =   'pfstate',
-      version          =   '1.1.1.2',
-      description      =   'class-defintion stateful module',
+      name             =   'tsmake',
+      version          =   '0.9.9',
+      description      =   'Text-input web-based slide show manager',
       long_description =   readme(),
       author           =   'Rudolph Pienaar',
       author_email     =   'rudolph.pienaar@gmail.com',
-      url              =   'https://github.com/FNNDSC/pfstate',
-      packages         =   ['pfstate'],
+      url              =   'https://github.com/FNNDSC/tslide',
+      packages         =   ['tsmake'],
       install_requires =   ['pudb', 'psutil', 'pfurl', 'pfmisc'],
       test_suite       =   'nose.collector',
       tests_require    =   ['nose'],
-      scripts          =   ['bin/pfstate'],
+      scripts          =   ['tsmake'],
       license          =   'MIT',
       zip_safe         =   False
      )
