@@ -9,6 +9,7 @@ import      logging
 
 import      hjson
 import      glob
+import      io
 
 from        distutils.dir_util  import  copy_tree
 
@@ -441,6 +442,7 @@ class tsmake(object):
         for key, value in kwargs.items():
             if key == 'inputDir':           self.str_inputDir           = value
             if key == "outputDir":          outputDir_process(value)
+            if key == 'b_noPageSplit':      self.b_noPageSplit              = value
             if key == 'verbosity':          self.verbosityLevel         = int(value)
             if key == 'b_noLogos':          self.b_noLogos              = bool(value)
             if key == 'fortune':            self.fortuneSlides          = int(value)
@@ -972,6 +974,39 @@ class tsmake(object):
             'pageHTML':     str_pageHTML
         }
 
+    def slide_masterRead(self) -> dict:
+        """
+        Read the master slide file and return a complete dictionary
+        representation.
+
+        Returns:
+            dict: parsed representation of the master slide
+        """
+        d_ret   = {
+            'status':           False,
+            'slideFileList':    [],
+            'numSlides':        0,
+            'msg':              "No input slidesFile processed"
+        }
+        str_fileContents:str    = ""
+        if len(self.str_slidesFile):
+            try:
+                fp: io.TextIOWrapper    = open("%s/%s" %
+                                            (self.str_inputDir,
+                                             self.str_slidesFile), "r")
+                d_ret['status']         = True
+                str_fileContents        = fp.read()
+                d_ret['slideFileList']  = str_fileContents.\
+                                            split(self.str_slidesFileBreak)
+                d_ret['numSlides']      = len(d_ret['slideFileList'])
+                self.ld_slide:list      = [hjson.loads(x) for x in d_ret['slideFileList']]
+                fp.close()
+            except:
+                d_ret['status']         = False
+                d_ret['msg']            = 'File %s/%s not accessible' % \
+                                            (self.str_inputDir,
+                                             self.str_slidesFile)
+        return d_ret
 
     def slidesFile_break(self):
         """
@@ -1001,31 +1036,33 @@ class tsmake(object):
             'msg':              "No input slidesFile processed"
         }
 
-        if len(self.str_slidesFile):
-            try:
-                fp              = open("%s/%s" %
-                                        (self.str_inputDir,
-                                         self.str_slidesFile), "r")
-                str_contents    = fp.read()
-                d_ret['status'] = True
-                fp.close()
-            except:
-                d_ret['status'] = False
-                d_ret['msg']    = 'File %s/%s not accessible' % \
-                                        (self.str_inputDir,
-                                         self.str_slidesFile)
+        d_ret   = self.slide_masterRead()
 
-            if d_ret['status']:
-                d_ret['slideFileList']   = str_contents.split(self.str_slidesFileBreak)
-                slideCount      = 0
-                for slide in d_ret['slideFileList']:
-                    slideCount += 1
-                    with open('%s/%s%03d.hjson' % (self.str_inputDir,
-                                                self.str_slidePrefixDOMID,
-                                                slideCount), 'w') as fp:
-                        fp.write(slide)
-                d_ret['msg']        = 'Slides created successfully'
-                d_ret['numSlides']  = slideCount
+        # if len(self.str_slidesFile):
+        #     try:
+        #         fp              = open("%s/%s" %
+        #                                 (self.str_inputDir,
+        #                                  self.str_slidesFile), "r")
+        #         str_contents    = fp.read()
+        #         d_ret['status'] = True
+        #         fp.close()
+        #     except:
+        #         d_ret['status'] = False
+        #         d_ret['msg']    = 'File %s/%s not accessible' % \
+        #                                 (self.str_inputDir,
+        #                                  self.str_slidesFile)
+
+        if d_ret['status']:
+            # d_ret['slideFileList']   = str_contents.split(self.str_slidesFileBreak)
+            slideCount:int      = 0
+            for slide in d_ret['slideFileList']:
+                slideCount += 1
+                with open('%s/%s%03d.hjson' % (self.str_inputDir,
+                                            self.str_slidePrefixDOMID,
+                                            slideCount), 'w') as fp:
+                    fp.write(slide)
+            d_ret['msg']        = 'Slides created successfully'
+            d_ret['numSlides']  = slideCount
         return d_ret
 
     def filelist_prune(self, at_data, *args, **kwargs):
@@ -1100,7 +1137,7 @@ class tsmake(object):
         b_status            = True
         d_env               = self.env_check()
         b_timerStart        = False
-        d_inputFile         = {}
+        d_inputFile:dict         = {}
         d_slides            = {}
         d_html              = {}
         d_assemble          = {}
@@ -1118,8 +1155,11 @@ class tsmake(object):
         if b_timerStart:
             other.tic()
 
-        # Process an optional input file to split into slides
-        d_inputFile     = self.slidesFile_break()
+        if not self.b_noPageSplit:
+            # Process an optional input file to split into slides
+            d_inputFile     = self.slidesFile_break()
+        else:
+            d_inputFile     = self.slide_masterRead()
 
         if d_inputFile['status']:
             # read input slides
