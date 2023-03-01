@@ -35,18 +35,18 @@ from    tsmake                  import tsmake
 
 str_name    = tsmake
 str_version = "0.99"
-str_desc    = Colors.CYAN + """
+str_desc    = Colors.CYAN + f"""
  _                           _
 | |                         | |
 | |_  ___  _ __ ___    __ _ | | __  ___
-| __|/ __|| '_ ` _ \  / _` || |/ / / _ \
+| __|/ __|| '_ ` _ \  / _` || |/ / / _ \\
 | |_ \__ \| | | | | || (_| ||   < |  __/
  \__||___/|_| |_| |_| \__,_||_|\_\ \___|
 
 
 
 
-                             tslide page make
+                            tslide page make
 
 
                               -- version """ + \
@@ -97,6 +97,7 @@ def synopsis(ab_shortOnly = False):
             %s                                                    \\
                 --inputDir <inputDir>                               \\
                 --outputDir <outputDir>                             \\
+                [--no-pageSplit]                                    \\
                 [--additionalDirList <dir1,dir2,...,dirN>]          \\
                 [--slideTextNumRows <numRows>]                      \\
                 [--slideListGlob <slidesListGlob>]                  \\
@@ -146,6 +147,10 @@ def synopsis(ab_shortOnly = False):
         --outputDir <outputDir>
         An output directory that will contain the resultant web-based
         files suitable for completely running the created slide show.
+
+        [--no-pageSplit]
+        If specified, do not split the master slide file into constituent
+        sub-files.
 
         [--additionalDirList <dir1,dir2,...,dirN>]
         An optional comma separated list of additional directories to
@@ -242,6 +247,14 @@ parser.add_argument(
     help    = 'The token on which to break an input slidesFile',
     dest    = 'slidesFileBreak',
     default = "<slidebreak>"
+)
+
+parser.add_argument(
+    '--no-pageSplit',
+    help    = 'if specified, do NOT split the main master slide into slide files',
+    dest    = 'b_noPageSplit',
+    action  = 'store_true',
+    default = False
 )
 
 parser.add_argument(
